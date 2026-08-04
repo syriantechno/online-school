@@ -1,0 +1,23 @@
+{
+  "name": "smoke",
+  "description": "Quick health check of the project",
+  "version": 2,
+  "steps": [
+    {
+      "type": "list",
+      "path": "."
+    },
+    {
+      "type": "glob",
+      "pattern": "{package.json,composer.json,pubspec.yaml,*.csproj,go.mod,Cargo.toml,pom.xml,README.md}"
+    },
+    {
+      "type": "shell",
+      "command": "git status -sb"
+    },
+    {
+      "type": "prompt",
+      "text": "Summarize project health from the workflow results above. Cover: stack/manifests, git state OR not-a-repo, top folders, risks, and one next step. Never invent git status if the folder is not a git repository."
+    }
+  ]
+}
