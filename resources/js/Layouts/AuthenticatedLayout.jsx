@@ -1,13 +1,41 @@
 import Sidebar from '@/Components/Sidebar';
+import ConfirmDialog from '@/Components/ConfirmDialog';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
-export default function AuthenticatedLayout({ header, children }) {
+const studentPageHints = {
+    courses: 'اختر مغامرتك التعليمية واكتشف دروساً جديدة.',
+    learning: 'تابع رحلتك من المكان الذي وصلت إليه.',
+    assignments: 'أنجز مهامك واجمع مزيداً من النجوم.',
+    exams: 'اختبر مهاراتك وأظهر ما تعلّمته.',
+    notes: 'رتّب أفكارك واحتفظ بكل ملاحظاتك المهمة.',
+    certificates: 'كل إنجاز تحققه يستحق أن نفتخر به.',
+    calendar: 'نظّم وقتك ولا تفوّت أي موعد مهم.',
+    books: 'افتح كتاباً وابدأ رحلة جديدة مع الكلمات.',
+    messages: 'تواصل مع معلّميك وزملائك بسهولة.',
+    notifications: 'تابع كل جديد في رحلتك التعليمية.',
+    announcements: 'اكتشف أخبار المدرسة والأنشطة الجديدة.',
+    stars: 'اجمع النجوم وتقدّم بين أبطال المدرسة.',
+    'video-rooms': 'استعد للقاء تفاعلي ممتع مع معلّمك.',
+};
+
+export default function AuthenticatedLayout({ header, children, studentTheme = null }) {
     const { flash, auth, unreadNotifications = 0 } = usePage().props;
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const activeStudentTheme = studentTheme ?? (auth.user?.role === 'student'
+        ? (auth.user?.gender === 'female' ? 'girl' : 'boy')
+        : null);
+    const currentRoute = route().current() || '';
+    const pageGroup = Object.keys(studentPageHints).find((key) => currentRoute.startsWith(key));
+    const pageVariant = pageGroup ? Object.keys(studentPageHints).indexOf(pageGroup) % 3 : 0;
+    const girlMascots = ['/assets/home/characters/girl2.png', '/assets/home/characters/girl3.png', '/assets/home/characters/girl-card.png'];
+    const boyMascots = ['/assets/home/characters/boy-hero.png', '/assets/home/characters/boy-card.png', '/assets/home/characters/boy-schoolbag.png'];
+    const pageMascot = activeStudentTheme === 'girl' ? girlMascots[pageVariant] : boyMascots[pageVariant];
+    const showStudentIntro = activeStudentTheme && currentRoute !== 'dashboard' && pageGroup;
 
     return (
-        <div className="relative min-h-screen bg-gradient-to-b from-slate-200/70 to-slate-50 before:fixed before:inset-x-0 before:top-0 before:z-0 before:h-[370px] before:bg-gradient-to-t before:from-theme-1/80 before:to-theme-2 before:content-['']">
+        <div className={`relative min-h-screen bg-gradient-to-b from-slate-200/70 to-slate-50 before:fixed before:inset-x-0 before:top-0 before:z-0 before:h-[370px] before:bg-gradient-to-t before:from-theme-1/80 before:to-theme-2 before:content-[''] ${activeStudentTheme ? `student-app-shell student-app-${activeStudentTheme}` : ''}`}>
+            <ConfirmDialog />
             <div className="relative z-10 flex min-h-screen">
                 <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
@@ -72,7 +100,14 @@ export default function AuthenticatedLayout({ header, children }) {
                     </header>
 
                     <div className="mt-16 px-5">
-                        <div className="rounded-2xl bg-slate-50 p-4 shadow-sm sm:p-5">
+                        <div className={`${activeStudentTheme ? 'student-page-content rounded-3xl bg-[#f8fbff] p-3 shadow-sm sm:p-5' : 'rounded-2xl bg-slate-50 p-4 shadow-sm sm:p-5'}`}>
+                            {showStudentIntro && (
+                                <section className={`student-page-intro student-page-intro-${pageVariant + 1}`}>
+                                    <span className="student-page-intro-orb" aria-hidden="true" />
+                                    <div><span>{activeStudentTheme === 'girl' ? 'بطلتنا المبدعة' : 'بطلنا المبدع'}</span><h2>{header}</h2><p>{studentPageHints[pageGroup]}</p></div>
+                                    <img src={pageMascot} alt="" aria-hidden="true" />
+                                </section>
+                            )}
                             {(flash?.success || flash?.error) && (
                                 <div className="mb-4">
                                     {flash.success && (

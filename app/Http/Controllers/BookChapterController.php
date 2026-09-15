@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\BookChapter;
+use App\Models\Enrollment;
 use App\Services\StarService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -75,7 +76,16 @@ class BookChapterController extends Controller
     public function complete(Request $request, Book $book, BookChapter $chapter, StarService $stars): RedirectResponse
     {
         abort_unless($chapter->book_id === $book->id, 404);
+        abort_unless($request->user()->isStudent() || $request->user()->isAdmin(), 403);
         abort_unless($book->is_published || $request->user()->isAdmin() || $request->user()->isTeacher(), 403);
+
+        if ($request->user()->isStudent() && $book->course_id) {
+            abort_unless($book->course()->where('is_published', true)->exists(), 404);
+            abort_unless(
+                Enrollment::query()->where('user_id', $request->user()->id)->where('course_id', $book->course_id)->exists(),
+                403
+            );
+        }
 
         $data = $request->validate([
             'score' => ['required', 'integer', 'min:0'],

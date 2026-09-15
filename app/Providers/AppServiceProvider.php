@@ -20,6 +20,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (function_exists('ini_set')) {
+            $current = (string) ini_get('memory_limit');
+            if ($current !== '-1') {
+                ini_set('memory_limit', '256M');
+            }
+        }
+
         Vite::prefetch(concurrency: 3);
     }
 }

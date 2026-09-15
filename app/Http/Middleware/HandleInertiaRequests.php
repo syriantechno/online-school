@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\AppNotification;
+use App\Models\Enrollment;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -20,7 +21,15 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => fn () => $request->user()
+                    ? $request->user()->only(['id', 'name', 'email', 'role', 'gender', 'stars', 'is_active'])
+                    : null,
+                'enrolledCourseIds' => fn () => $request->user()
+                    ? Enrollment::query()
+                        ->where('user_id', $request->user()->id)
+                        ->pluck('course_id')
+                        ->all()
+                    : [],
             ],
             'locale' => app()->getLocale(),
             'appName' => config('app.name'),

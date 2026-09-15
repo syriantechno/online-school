@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'phone', 'is_active', 'stars'])]
+#[Fillable(['name', 'email', 'password', 'role', 'gender', 'phone', 'is_active', 'stars'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -25,6 +25,10 @@ class User extends Authenticatable
     public const ROLE_STUDENT = 'student';
 
     public const ROLE_PARENT = 'parent';
+
+    public const GENDER_MALE = 'male';
+
+    public const GENDER_FEMALE = 'female';
 
     protected function casts(): array
     {

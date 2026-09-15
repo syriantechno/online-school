@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { confirmAction } from '@/Components/ConfirmDialog';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link, router, useForm } from '@inertiajs/react';
@@ -78,20 +79,20 @@ export default function Index({ exams, myAttempts = {}, canManage, courses = [] 
                     return (
                         <div key={exam.id} className="box flex flex-col p-5">
                             <div className="mb-2 flex items-start justify-between gap-2">
-                                <h3 className="font-medium text-slate-800">{exam.title}</h3>
-                                <span className={`rounded-md px-2 py-1 text-[11px] ${exam.is_published ? 'bg-success/10 text-success' : 'bg-pending/10 text-pending'}`}>
+                                <h3 className="text-lg font-black leading-8 text-slate-800">{exam.title}</h3>
+                                <span className={`shrink-0 rounded-md px-3 py-1.5 text-sm font-bold ${exam.is_published ? 'bg-success/10 text-success' : 'bg-pending/10 text-pending'}`}>
                                     {exam.is_published ? 'منشور' : 'مسودة'}
                                 </span>
                             </div>
-                            <p className="text-xs text-slate-500">{exam.course?.title}</p>
-                            <p className="mt-2 line-clamp-2 text-sm text-slate-600">{exam.description || 'بدون وصف'}</p>
-                            <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500">
-                                <span>{exam.questions_count || 0} سؤال</span>
-                                {exam.duration_minutes && <span>· {exam.duration_minutes} د</span>}
-                                <span>· نجاح {exam.pass_percent}%</span>
+                            <p className="mt-1 text-base font-bold text-slate-600">{exam.course?.title}</p>
+                            <p className="mt-3 line-clamp-2 text-base leading-8 text-slate-700">{exam.description || 'بدون وصف'}</p>
+                            <div className="mt-4 flex flex-wrap gap-2.5 text-sm font-bold text-slate-600">
+                                <span className="rounded-lg bg-white px-3 py-2 shadow-sm">{exam.questions_count || 0} سؤال</span>
+                                {exam.duration_minutes && <span className="rounded-lg bg-white px-3 py-2 shadow-sm">{exam.duration_minutes} دقيقة</span>}
+                                <span className="rounded-lg bg-white px-3 py-2 shadow-sm">النجاح {exam.pass_percent}%</span>
                                 {attempt && (
-                                    <span className={attempt.passed ? 'text-success' : 'text-pending'}>
-                                        · آخر محاولة {attempt.percent}%
+                                    <span className={`rounded-lg bg-white px-3 py-2 shadow-sm ${attempt.passed ? 'text-success' : 'text-pending'}`}>
+                                        آخر محاولة {attempt.percent}%
                                     </span>
                                 )}
                             </div>
@@ -100,13 +101,17 @@ export default function Index({ exams, myAttempts = {}, canManage, courses = [] 
                                     فتح
                                 </Link>
                                 {canManage && (
-                                    <button
+                                    <><button
+                                        type="button"
+                                        className="rounded-md border border-theme-1/20 px-3 py-2 text-sm font-bold text-theme-1"
+                                        onClick={() => router.post(route('exams.duplicate', exam.id))}
+                                    >نسخ</button><button
                                         type="button"
                                         className="rounded-md border border-slate-200 px-3 py-2 text-sm text-danger"
-                                        onClick={() => confirm('حذف الفحص؟') && router.delete(route('exams.destroy', exam.id))}
+                                        onClick={async () => await confirmAction({ message: 'سيتم حذف الفحص وأسئلته ومحاولاته.', variant: 'danger' }) && router.delete(route('exams.destroy', exam.id))}
                                     >
                                         حذف
-                                    </button>
+                                    </button></>
                                 )}
                             </div>
                         </div>

@@ -5,6 +5,14 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 
 export default function Show({ assignment, submission, submissions = [], canManage, canSubmit }) {
     const submitForm = useForm({ content: '', file: null });
+    const settingsForm = useForm({
+        title: assignment.title,
+        instructions: assignment.instructions || '',
+        max_score: assignment.max_score,
+        stars_reward: assignment.stars_reward,
+        due_at: assignment.due_at ? assignment.due_at.slice(0, 16) : '',
+        is_published: assignment.is_published,
+    });
     const gradeForms = {};
 
     const submit = (e) => {
@@ -34,6 +42,23 @@ export default function Show({ assignment, submission, submissions = [], canMana
                     )}
                 </div>
             </div>
+
+            {canManage && (
+                <form onSubmit={(e) => { e.preventDefault(); settingsForm.put(route('assignments.update', assignment.id), { preserveScroll: true }); }} className="box mb-5 grid gap-4 p-5 md:grid-cols-2">
+                    <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-3">
+                        <div><h2 className="text-lg font-black text-slate-900">مراجعة الواجب ونشره</h2><p className="mt-1 text-sm font-bold text-slate-500">عدّل الأسئلة أو التعليمات ثم فعّل النشر عندما يصبح جاهزاً.</p></div>
+                        <span className={`rounded-md px-3 py-1.5 text-sm font-black ${assignment.is_published ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{assignment.is_published ? 'منشور' : 'مسودة'}</span>
+                    </div>
+                    <div className="md:col-span-2"><InputLabel value="العنوان" /><input className="form-control mt-1" value={settingsForm.data.title} onChange={(e) => settingsForm.setData('title', e.target.value)} required /></div>
+                    <div className="md:col-span-2"><InputLabel value="الأسئلة والتعليمات" /><textarea className="form-control mt-1 font-medium leading-8" rows="12" value={settingsForm.data.instructions} onChange={(e) => settingsForm.setData('instructions', e.target.value)} /></div>
+                    <div><InputLabel value="الدرجة القصوى" /><input type="number" min="1" max="100" className="form-control mt-1" value={settingsForm.data.max_score} onChange={(e) => settingsForm.setData('max_score', e.target.value)} /></div>
+                    <div><InputLabel value="النجوم" /><input type="number" min="1" max="20" className="form-control mt-1" value={settingsForm.data.stars_reward} onChange={(e) => settingsForm.setData('stars_reward', e.target.value)} /></div>
+                    <div><InputLabel value="آخر موعد" /><input type="datetime-local" className="form-control mt-1" value={settingsForm.data.due_at} onChange={(e) => settingsForm.setData('due_at', e.target.value)} /></div>
+                    <label className="flex min-h-12 items-center gap-3 rounded-lg border border-theme-1/15 bg-theme-1/5 px-4 font-black text-theme-1"><input type="checkbox" checked={settingsForm.data.is_published} onChange={(e) => settingsForm.setData('is_published', e.target.checked)} /> نشر الواجب للطلاب</label>
+                    {Object.keys(settingsForm.errors).length > 0 && <p className="md:col-span-2 rounded-lg bg-rose-50 p-3 text-sm font-bold text-rose-700">{Object.values(settingsForm.errors)[0]}</p>}
+                    <div className="md:col-span-2"><PrimaryButton disabled={settingsForm.processing}>حفظ التعديلات</PrimaryButton></div>
+                </form>
+            )}
 
             {canSubmit && (
                 <form onSubmit={submit} className="box mb-5 space-y-3 p-5">

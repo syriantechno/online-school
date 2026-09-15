@@ -8,10 +8,9 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\User;
 use App\Services\NotificationService;
-use App\Services\StarService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,6 +31,7 @@ class AssignmentController extends Controller
             })
             ->when($user->isStudent(), function ($q) use ($user) {
                 $q->where('is_published', true)
+                    ->whereHas('course', fn ($c) => $c->where('is_published', true))
                     ->whereHas('course.enrollments', fn ($e) => $e->where('user_id', $user->id));
             })
             ->latest()
@@ -63,7 +63,12 @@ class AssignmentController extends Controller
 
         $data = $request->validate([
             'course_id' => ['required', 'exists:courses,id'],
-            'lesson_id' => ['nullable', 'exists:lessons,id'],
+            'lesson_id' => [
+                'nullable',
+                Rule::exists('lessons', 'id')->where(
+                    fn ($query) => $query->where('course_id', $request->input('course_id'))
+                ),
+            ],
             'title' => ['required', 'string', 'max:255'],
             'instructions' => ['nullable', 'string'],
             'max_score' => ['nullable', 'integer', 'min:1', 'max:100'],
@@ -87,26 +92,42 @@ class AssignmentController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
-        $students = User::query()
-            ->whereIn('id', Enrollment::query()->where('course_id', $assignment->course_id)->pluck('user_id'))
-            ->get();
+        if ($assignment->is_published) {
+            $students = User::query()
+                ->whereIn('id', Enrollment::query()->where('course_id', $assignment->course_id)->pluck('user_id'))
+                ->get();
 
-        $notifications->sendMany(
-            $students,
-            'assignment',
-            'واجب جديد: '.$assignment->title,
-            'تم نشر واجب جديد في دورتك.',
-            route('assignments.show', $assignment->id)
-        );
+            $notifications->sendMany(
+                $students,
+                'assignment',
+                'واجب جديد: '.$assignment->title,
+                'تم نشر واجب جديد في دورتك.',
+                route('assignments.show', $assignment->id)
+            );
+        }
 
         return redirect()->route('assignments.show', $assignment)->with('success', 'تم إنشاء الواجب.');
     }
 
     public function show(Request $request, Assignment $assignment): Response
     {
-        $assignment->load(['course:id,title,teacher_id', 'lesson:id,title', 'creator:id,name']);
+        $assignment->load(['course:id,title,teacher_id,is_published', 'lesson:id,title', 'creator:id,name']);
 
         $user = $request->user();
+        $canManage = $user->isAdmin()
+            || ($user->isTeacher() && $assignment->course?->teacher_id === $user->id)
+            || ($user->isTeacher() && $assignment->created_by === $user->id);
+
+        if ($user->isStudent()) {
+            abort_unless($assignment->is_published && $assignment->course?->is_published, 404);
+            abort_unless(
+                Enrollment::query()->where('user_id', $user->id)->where('course_id', $assignment->course_id)->exists(),
+                403
+            );
+        } elseif (! $canManage) {
+            abort(403);
+        }
+
         $submission = null;
         $submissions = collect();
 
@@ -125,8 +146,7 @@ class AssignmentController extends Controller
             'assignment' => $assignment,
             'submission' => $submission,
             'submissions' => $submissions,
-            'canManage' => $user->isAdmin()
-                || ($user->isTeacher() && $assignment->course?->teacher_id === $user->id),
+            'canManage' => $canManage,
             'canSubmit' => $user->isStudent(),
         ]);
     }
@@ -142,5 +162,48 @@ class AssignmentController extends Controller
         $assignment->delete();
 
         return redirect()->route('assignments.index')->with('success', 'تم حذف الواجب.');
+    }
+
+    public function update(Request $request, Assignment $assignment, NotificationService $notifications): RedirectResponse
+    {
+        $assignment->loadMissing('course:id,teacher_id');
+        abort_unless(
+            $request->user()->isAdmin()
+            || ($request->user()->isTeacher() && ($assignment->created_by === $request->user()->id || $assignment->course?->teacher_id === $request->user()->id)),
+            403
+        );
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'instructions' => ['nullable', 'string'],
+            'max_score' => ['required', 'integer', 'min:1', 'max:100'],
+            'stars_reward' => ['required', 'integer', 'min:1', 'max:20'],
+            'due_at' => ['nullable', 'date'],
+            'is_published' => ['required', 'boolean'],
+        ]);
+        $wasPublished = $assignment->is_published;
+        $assignment->update($data);
+
+        if (! $wasPublished && $assignment->is_published) {
+            $students = User::query()->whereIn('id', Enrollment::query()->where('course_id', $assignment->course_id)->pluck('user_id'))->get();
+            $notifications->sendMany($students, 'assignment', 'واجب جديد: '.$assignment->title, 'تم نشر واجب جديد في دورتك.', route('assignments.show', $assignment));
+        }
+
+        return back()->with('success', 'تم تحديث الواجب.');
+    }
+
+    public function duplicate(Request $request, Assignment $assignment): RedirectResponse
+    {
+        $assignment->loadMissing('course:id,teacher_id');
+        abort_unless($request->user()->isAdmin() || ($request->user()->isTeacher() && $assignment->course?->teacher_id === $request->user()->id), 403);
+
+        $copy = $assignment->replicate(['is_published']);
+        $copy->title = 'نسخة من '.$assignment->title;
+        $copy->created_by = $request->user()->id;
+        $copy->is_published = false;
+        $copy->due_at = null;
+        $copy->save();
+
+        return redirect()->route('assignments.show', $copy)->with('success', 'تم نسخ الواجب كمسودة جديدة.');
     }
 }

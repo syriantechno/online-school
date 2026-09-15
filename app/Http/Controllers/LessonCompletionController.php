@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\LessonCompletion;
+use App\Support\CourseLessonProgress;
 use App\Services\ProgressService;
 use App\Services\StarService;
 use Illuminate\Http\RedirectResponse;
@@ -32,12 +33,20 @@ class LessonCompletionController extends Controller
             return back()->with('error', 'يجب التسجيل في الدورة أولاً لإكمال الدرس.');
         }
 
+        if ($user->isStudent() && ! CourseLessonProgress::isLessonUnlocked($lesson, $user->id)) {
+            return back()->with('error', 'يجب إكمال الدرس السابق أولاً.');
+        }
+
         $data = $request->validate([
             'score' => ['nullable', 'integer', 'min:0'],
             'total' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $hasQuiz = $lesson->is_interactive && ! empty($lesson->interactive_payload['questions']);
+        $hasQuiz = $lesson->is_interactive && (
+            ! empty($lesson->interactive_payload['questions']) ||
+            ! empty($lesson->interactive_payload['items']) ||
+            $lesson->worksheetZoneCount() > 0
+        );
 
         if ($hasQuiz) {
             $score = (int) ($data['score'] ?? 0);

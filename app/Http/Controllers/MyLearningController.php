@@ -21,7 +21,7 @@ class MyLearningController extends Controller
 
         $enrollments = Enrollment::query()
             ->with([
-                'course:id,title,subject,level,teacher_id',
+                'course:id,title,slug,subject,level,teacher_id',
                 'course.teacher:id,name',
                 'course.lessons' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order'),
             ])

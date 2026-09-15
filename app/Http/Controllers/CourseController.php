@@ -70,10 +70,19 @@ class CourseController extends Controller
     public function show(Request $request, Course $course): Response
     {
         $user = $request->user();
+        $canManage = $user->isAdmin() || ($user->isTeacher() && $course->teacher_id === $user->id);
+
+        if (! $canManage) {
+            abort_unless($course->is_published, 404);
+        }
+
         $course->load([
             'teacher:id,name',
-            'lessons',
-            'books',
+            'lessons' => fn ($query) => $query
+                ->when(! $canManage, fn ($lessons) => $lessons->where('is_published', true))
+                ->orderBy('sort_order'),
+            'books' => fn ($query) => $query
+                ->when(! $canManage, fn ($books) => $books->where('is_published', true)),
             'reviews.user:id,name',
         ]);
 
@@ -87,8 +96,7 @@ class CourseController extends Controller
 
         return Inertia::render('Courses/Show', [
             'course' => $course,
-            'canManage' => $user->isAdmin()
-                || ($user->isTeacher() && $course->teacher_id === $user->id),
+            'canManage' => $canManage,
             'isEnrolled' => (bool) $enrollment,
             'enrollment' => $enrollment,
             'canEnroll' => $user->isStudent() && $course->is_published,

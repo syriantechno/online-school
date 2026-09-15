@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { confirmAction } from '@/Components/ConfirmDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link, router } from '@inertiajs/react';
 
@@ -49,8 +50,8 @@ export default function Index({ rooms, canManage }) {
                                 <button
                                     type="button"
                                     className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-600"
-                                    onClick={() => {
-                                        if (confirm('حذف الغرفة؟')) {
+                                    onClick={async () => {
+                                        if (await confirmAction({ message: 'سيتم حذف غرفة الفيديو نهائياً.', variant: 'danger' })) {
                                             router.delete(route('video-rooms.destroy', room.id));
                                         }
                                     }}

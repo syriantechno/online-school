@@ -18,23 +18,31 @@ use App\Http\Controllers\DiscussionReplyController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\ExamAttemptController;
 use App\Http\Controllers\ExamController;
+use App\Http\Controllers\GeneratedLessonController;
 use App\Http\Controllers\GradebookController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\LessonCompletionController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\LessonNoteController;
+use App\Http\Controllers\LessonSubmissionController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MyLearningController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ParentChildController;
-use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicCourseController;
+use App\Http\Controllers\PublicLessonController;
+use App\Http\Controllers\QuestionBankController;
 use App\Http\Controllers\Settings\GoogleSettingsController;
+use App\Http\Controllers\Settings\HomepageSettingsController;
 use App\Http\Controllers\Settings\SeoSettingsController;
+use App\Http\Controllers\Settings\UnifiedSettingsController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\StudentProfileController;
 use App\Http\Controllers\StarLeaderboardController;
 use App\Http\Controllers\StudentRatingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VideoRoomController;
+use App\Http\Controllers\WorksheetController;
 use App\Models\Book;
 use App\Models\Course;
 use App\Models\Lesson;
@@ -45,6 +53,7 @@ use Inertia\Inertia;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
+        'content' => HomepageSettingsController::content(),
         'stats' => [
             [
                 'label' => 'الدورات',
@@ -71,10 +80,24 @@ Route::get('/', function () {
             ->with('teacher:id,name')
             ->where('is_published', true)
             ->latest()
-            ->take(5)
-            ->get(['id', 'title', 'subject', 'level', 'teacher_id']),
+            ->take(6)
+            ->get(['id', 'title', 'slug', 'description', 'subject', 'level', 'cover_image', 'teacher_id']),
     ]);
 });
+
+Route::get('/explore', [PublicCourseController::class, 'index'])->name('explore.index');
+Route::get('/explore/{course:slug}', [PublicCourseController::class, 'show'])->name('explore.show');
+
+$marketingPages = [
+    'about' => ['badge' => 'قصتنا', 'title' => 'مدرسة عربية صُممت من أجل الطفل', 'description' => 'نحوّل تعلم العربية إلى رحلة مليئة بالفضول والإنجاز والثقة.', 'cards' => [['title' => 'رؤيتنا', 'text' => 'أن يحب كل طفل لغته ويستخدمها بثقة في حياته اليومية.'], ['title' => 'طريقتنا', 'text' => 'دروس قصيرة وتفاعلية تراعي العمر والمستوى وأسلوب التعلم.'], ['title' => 'مجتمعنا', 'text' => 'أهل ومعلمون وطلاب يعملون معاً في بيئة آمنة وإيجابية.']]],
+    'teachers' => ['badge' => 'فريقنا', 'title' => 'معلمون يصنعون فرقاً حقيقياً', 'description' => 'خبرات تربوية وشغف باللغة وقدرة على الوصول إلى كل طفل.', 'cards' => [['title' => 'اختيار دقيق', 'text' => 'نختار المعلمين وفق خبرتهم وقدرتهم على التواصل مع الأطفال.'], ['title' => 'تدريب مستمر', 'text' => 'ورش دورية في التعليم التفاعلي والتقنيات الحديثة.'], ['title' => 'متابعة شخصية', 'text' => 'ملاحظات واضحة وخطة دعم تناسب تقدم كل طالب.']]],
+    'pricing' => ['badge' => 'خطط مرنة', 'title' => 'اختر الخطة التي تناسب رحلة طفلك', 'description' => 'خيارات بسيطة وشفافة تبدأ بالتجربة وتكبر مع احتياج الطالب.', 'cards' => [['title' => 'التجربة المجانية', 'text' => 'اختبار مستوى ومجموعة دروس تمهيدية بلا التزام.'], ['title' => 'الخطة الشهرية', 'text' => 'دروس وأنشطة وتقارير تقدم شهرية للأهل.'], ['title' => 'الخطة المتقدمة', 'text' => 'متابعة أوسع وجلسات مباشرة ودعم شخصي إضافي.']]],
+    'blog' => ['badge' => 'مدونة المدرسة', 'title' => 'أفكار تساعد طفلك على حب العربية', 'description' => 'مقالات عملية للأهل والمعلمين حول القراءة والتعلم والتحفيز.', 'cards' => [['title' => 'كيف نشجع القراءة؟', 'text' => 'خطوات يومية صغيرة تجعل الكتاب صديقاً للطفل.'], ['title' => 'التعلم باللعب', 'text' => 'لماذا يتذكر الأطفال ما يتعلمونه أثناء اللعب؟'], ['title' => 'بناء عادة التعلم', 'text' => 'روتين بسيط ومستمر أفضل من جلسات طويلة ومتباعدة.']]],
+    'contact' => ['badge' => 'نحن قريبون منك', 'title' => 'تواصل معنا في أي وقت', 'description' => 'فريقنا جاهز للإجابة عن أسئلتك ومساعدتك في اختيار البداية المناسبة.', 'cards' => [['title' => 'الدعم', 'text' => 'راسلنا على hello@taallam.school وسنرد عليك بأقرب وقت.'], ['title' => 'الهاتف', 'text' => 'اتصل بنا على +971 50 000 0000 خلال ساعات العمل.'], ['title' => 'زيارة المدرسة', 'text' => 'دبي، الإمارات العربية المتحدة — الزيارة بموعد مسبق.']]],
+];
+foreach ($marketingPages as $slug => $page) Route::get('/'.$slug, fn () => Inertia::render('MarketingPage', ['page' => $page]))->name('marketing.'.$slug);
+
+Route::get('/lab/gradient', fn () => Inertia::render('Lab/GradientBg'))->name('lab.gradient');
 
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/robots.txt', function () {
@@ -86,6 +109,7 @@ Route::get('/robots.txt', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/my-space', StudentProfileController::class)->name('student.profile');
 
     Route::resource('courses', CourseController::class);
     Route::post('/courses/{course}/enroll', [EnrollmentController::class, 'store'])->name('courses.enroll');
@@ -95,13 +119,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/courses/{course}/gradebook', GradebookController::class)->name('courses.gradebook');
 
     Route::get('/my-learning', MyLearningController::class)->name('learning.my');
+    Route::get('/explore/{course:slug}/learn/{lesson}', [PublicLessonController::class, 'show'])->name('explore.learn');
     Route::get('/calendar', CalendarController::class)->name('calendar.index');
     Route::get('/analytics', AnalyticsController::class)->name('analytics.index');
     Route::get('/notes', [LessonNoteController::class, 'index'])->name('notes.index');
 
     Route::resource('lessons', LessonController::class);
+    Route::get('/worksheets/create', [WorksheetController::class, 'create'])->name('worksheets.create');
+    Route::post('/worksheets', [WorksheetController::class, 'store'])->name('worksheets.store');
+    Route::get('/worksheets/{lesson}/edit', [WorksheetController::class, 'edit'])->name('worksheets.edit');
+    Route::put('/worksheets/{lesson}', [WorksheetController::class, 'update'])->name('worksheets.update');
+    Route::post('/worksheets/images', [WorksheetController::class, 'upload'])->name('worksheets.images.store');
+    Route::delete('/worksheets/images', [WorksheetController::class, 'destroyImage'])->name('worksheets.images.destroy');
+    Route::get('/lesson-generator/studio', [GeneratedLessonController::class, 'studio'])->name('lesson-generator.studio');
+    Route::get('/lesson-generator/create', [GeneratedLessonController::class, 'create'])->name('lesson-generator.create');
+    Route::post('/lesson-generator', [GeneratedLessonController::class, 'store'])->name('lesson-generator.store');
+    Route::get('/lesson-generator/{lesson}/edit', [GeneratedLessonController::class, 'edit'])->name('lesson-generator.edit');
+    Route::put('/lesson-generator/{lesson}', [GeneratedLessonController::class, 'update'])->name('lesson-generator.update');
     Route::post('/lessons/{lesson}/complete', [LessonCompletionController::class, 'store'])->name('lessons.complete');
     Route::post('/lessons/{lesson}/notes', [LessonNoteController::class, 'store'])->name('lessons.notes.store');
+    Route::post('/lessons/{lesson}/audio', [LessonSubmissionController::class, 'store'])->name('lessons.audio.store');
+    Route::post('/lessons/{lesson}/audio/{submission}/grade', [LessonSubmissionController::class, 'grade'])->name('lessons.audio.grade');
     Route::resource('books', BookController::class);
 
     Route::post('/books/{book}/chapters', [BookChapterController::class, 'store'])->name('books.chapters.store');
@@ -131,14 +169,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/assignments', [AssignmentController::class, 'index'])->name('assignments.index');
     Route::post('/assignments', [AssignmentController::class, 'store'])->name('assignments.store');
     Route::get('/assignments/{assignment}', [AssignmentController::class, 'show'])->name('assignments.show');
+    Route::put('/assignments/{assignment}', [AssignmentController::class, 'update'])->name('assignments.update');
+    Route::post('/assignments/{assignment}/duplicate', [AssignmentController::class, 'duplicate'])->name('assignments.duplicate');
     Route::delete('/assignments/{assignment}', [AssignmentController::class, 'destroy'])->name('assignments.destroy');
     Route::post('/assignments/{assignment}/submit', [AssignmentSubmissionController::class, 'store'])->name('assignments.submit');
     Route::post('/assignments/{assignment}/submissions/{submission}/grade', [AssignmentSubmissionController::class, 'grade'])->name('assignments.grade');
+
+    Route::get('/question-bank', [QuestionBankController::class, 'index'])->name('question-bank.index');
+    Route::post('/question-bank', [QuestionBankController::class, 'store'])->name('question-bank.store');
+    Route::put('/question-bank/{question}', [QuestionBankController::class, 'update'])->name('question-bank.update');
+    Route::delete('/question-bank/{question}', [QuestionBankController::class, 'destroy'])->name('question-bank.destroy');
+    Route::post('/question-bank/generate', [QuestionBankController::class, 'generate'])->name('question-bank.generate');
+    Route::post('/question-bank/from-lesson', [QuestionBankController::class, 'generateFromLesson'])->name('question-bank.from-lesson');
 
     Route::get('/exams', [ExamController::class, 'index'])->name('exams.index');
     Route::post('/exams', [ExamController::class, 'store'])->name('exams.store');
     Route::get('/exams/{exam}', [ExamController::class, 'show'])->name('exams.show');
     Route::put('/exams/{exam}', [ExamController::class, 'update'])->name('exams.update');
+    Route::post('/exams/{exam}/duplicate', [ExamController::class, 'duplicate'])->name('exams.duplicate');
     Route::delete('/exams/{exam}', [ExamController::class, 'destroy'])->name('exams.destroy');
     Route::post('/exams/{exam}/questions', [ExamController::class, 'storeQuestion'])->name('exams.questions.store');
     Route::delete('/exams/{exam}/questions/{question}', [ExamController::class, 'destroyQuestion'])->name('exams.questions.destroy');
@@ -164,11 +212,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/parent-links', [ParentChildController::class, 'destroy'])->name('parent-links.destroy');
 
     Route::middleware('role:admin')->group(function () {
+        Route::get('/settings', [UnifiedSettingsController::class, 'edit'])->name('settings.index');
+        Route::put('/settings', [UnifiedSettingsController::class, 'update'])->name('settings.update');
         Route::resource('users', UserController::class)->except(['show']);
         Route::get('/settings/seo', [SeoSettingsController::class, 'edit'])->name('settings.seo.edit');
         Route::put('/settings/seo', [SeoSettingsController::class, 'update'])->name('settings.seo.update');
         Route::get('/settings/google', [GoogleSettingsController::class, 'edit'])->name('settings.google.edit');
         Route::put('/settings/google', [GoogleSettingsController::class, 'update'])->name('settings.google.update');
+        Route::get('/settings/homepage', [HomepageSettingsController::class, 'edit'])->name('settings.homepage.edit');
+        Route::put('/settings/homepage', [HomepageSettingsController::class, 'update'])->name('settings.homepage.update');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

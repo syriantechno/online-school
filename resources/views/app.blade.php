@@ -1,19 +1,9 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="rtl" class="default">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="rtl">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <script>
-            (function () {
-                try {
-                    var t = localStorage.getItem('theme-color') || 'default';
-                    var allowed = ['default','theme-1','theme-2','theme-3','theme-4','theme-5','theme-6','theme-7','theme-8','theme-9','theme-10','theme-11','theme-12','theme-13','theme-14','theme-15','theme-16','theme-17'];
-                    if (allowed.indexOf(t) === -1) t = 'default';
-                    document.documentElement.className = t;
-                } catch (e) {}
-            })();
-        </script>
-
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         @php
             $seo = \App\Models\SeoSetting::getCurrent();
             $description = $seo->default_meta_description;
@@ -26,10 +16,10 @@
 
         <title inertia>{{ $seo->site_name ?: config('app.name', 'المدرسة الإلكترونية') }}</title>
         @if($description)
-            <meta name="description" content="{{ $description }}">
+            <meta name="description" content="{{ \Illuminate\Support\Str::limit(strip_tags($description), 300, '') }}">
         @endif
         @if($keywords)
-            <meta name="keywords" content="{{ $keywords }}">
+            <meta name="keywords" content="{{ \Illuminate\Support\Str::limit(strip_tags($keywords), 300, '') }}">
         @endif
         <meta name="robots" content="index,follow">
         <link rel="canonical" href="{{ $canonical }}">
@@ -40,18 +30,18 @@
 
         <meta property="og:locale" content="ar_SA">
         <meta property="og:type" content="website">
-        <meta property="og:title" content="{{ $title }}">
-        <meta property="og:description" content="{{ $description }}">
+        <meta property="og:title" content="{{ \Illuminate\Support\Str::limit($title, 120, '') }}">
+        <meta property="og:description" content="{{ \Illuminate\Support\Str::limit(strip_tags($description), 300, '') }}">
         <meta property="og:url" content="{{ $canonical }}">
         <meta property="og:site_name" content="{{ $seo->site_name ?: config('app.name') }}">
         <meta property="og:image" content="{{ $ogImage }}">
         <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="{{ $title }}">
-        <meta name="twitter:description" content="{{ $description }}">
+        <meta name="twitter:title" content="{{ \Illuminate\Support\Str::limit($title, 120, '') }}">
+        <meta name="twitter:description" content="{{ \Illuminate\Support\Str::limit(strip_tags($description), 300, '') }}">
         <meta name="twitter:image" content="{{ $ogImage }}">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=cairo:400,500,600,700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=amiri:400,700|cairo:400,500,600,700|mirza:400,500,600,700&display=swap" rel="stylesheet" />
 
         @routes
         @viteReactRefresh
@@ -59,7 +49,26 @@
         @inertiaHead
         @include('components.google-gtag')
     </head>
-    <body class="font-sans antialiased bg-slate-50 text-slate-600">
+    <body class="font-sans antialiased bg-[#f7f8fa] text-slate-600">
+        <script>
+            (function () {
+                @if(request()->is('/') && ! auth()->check())
+                    var theme = 'general';
+                @elseif(auth()->check())
+                    @if(auth()->user()->role === 'student')
+                        var theme = @json(auth()->user()->gender === 'female' ? 'girl' : 'boy');
+                    @else
+                        var theme = 'boy';
+                    @endif
+                @else
+                    var theme = localStorage.getItem('student-login-theme') === 'girl' ? 'girl' : 'boy';
+                @endif
+                var cls = theme === 'girl'
+                    ? 'site-theme-girl'
+                    : (theme === 'general' ? 'site-theme-general' : 'site-theme-boy');
+                document.documentElement.classList.add(cls);
+            })();
+        </script>
         @inertia
     </body>
 </html>

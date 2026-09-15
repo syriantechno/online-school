@@ -12,6 +12,8 @@ const icons = {
     learn: 'M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.908.076-1.747.17-2.658.813m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342',
     courses: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
     lessons: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+    worksheets: 'M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z',
+    generator: 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z',
     books: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
     video: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z',
     assign: 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z',
@@ -32,9 +34,9 @@ const icons = {
 };
 
 function navForRole(role) {
-    const items = [
-        { label: 'لوحة التحكم', href: route('dashboard'), routeName: 'dashboard', icon: icons.dashboard },
-    ];
+    const items = role === 'student'
+        ? [{ label: 'ملفي الشخصي', href: route('student.profile'), routeName: 'student.profile', icon: icons.dashboard }]
+        : [{ label: 'لوحة التحكم', href: route('dashboard'), routeName: 'dashboard', icon: icons.dashboard }];
 
     if (role === 'parent') {
         items.push(
@@ -65,9 +67,12 @@ function navForRole(role) {
         items.push(
             { label: 'الدورات', href: route('courses.index'), routeName: 'courses.*', icon: icons.courses },
             { label: 'الدروس', href: route('lessons.index'), routeName: 'lessons.*', icon: icons.lessons },
+            { label: 'استوديو الدروس', href: route('lesson-generator.studio'), routeName: ['lesson-generator.studio', 'lesson-generator.create', 'lesson-generator.edit'], icon: icons.generator },
+            { label: 'مولد الصور', href: route('worksheets.create'), routeName: 'worksheets.*', icon: icons.worksheets },
             { label: 'الكتب', href: route('books.index'), routeName: 'books.*', icon: icons.books },
             { label: 'الواجبات', href: route('assignments.index'), routeName: 'assignments.*', icon: icons.assign },
             { label: 'الفحوصات', href: route('exams.index'), routeName: 'exams.*', icon: icons.cert },
+            { label: 'بنك الأسئلة', href: route('question-bank.index'), routeName: 'question-bank.*', icon: icons.assign },
             { label: 'التقارير', href: route('analytics.index'), routeName: 'analytics.*', icon: icons.analytics },
             { label: 'غرف الفيديو', href: route('video-rooms.index'), routeName: 'video-rooms.*', icon: icons.video, divider: 'التفاعل' },
             { label: 'التقويم', href: route('calendar.index'), routeName: 'calendar.*', icon: icons.calendar },
@@ -84,8 +89,7 @@ function navForRole(role) {
         items.push(
             { label: 'المستخدمون', href: route('users.index'), routeName: 'users.*', icon: icons.users, divider: 'الإدارة' },
             { label: 'ربط الأولياء', href: route('children.index'), routeName: 'children.*', icon: icons.children },
-            { label: 'إعدادات SEO', href: route('settings.seo.edit'), routeName: 'settings.seo.*', icon: icons.seo },
-            { label: 'إعدادات Google', href: route('settings.google.edit'), routeName: 'settings.google.*', icon: icons.google },
+            { label: 'إعدادات المنصة', href: route('settings.index'), routeName: 'settings.*', icon: icons.seo },
         );
     }
 
@@ -117,12 +121,17 @@ export default function Sidebar({ open, onClose }) {
                             <p className="truncate text-sm font-medium text-slate-800">
                                 {appName || 'المدرسة الإلكترونية'}
                             </p>
-                            <p className="text-xs text-slate-500">لوحة الإدارة</p>
+                            <p className="text-xs text-slate-500">{auth.user?.role === 'student' ? (auth.user?.gender === 'female' ? 'مساحة الطالبة' : 'مساحة الطالب') : 'لوحة الإدارة'}</p>
                         </div>
                     </div>
 
                     <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-3">
-                        {items.map((item) => (
+                        {items.map((item) => {
+                            const active = Array.isArray(item.routeName)
+                                ? item.routeName.some((name) => route().current(name))
+                                : route().current(item.routeName);
+
+                            return (
                             <div key={item.label}>
                                 {item.divider && (
                                     <div className="mb-2 mt-4 px-2 text-xs text-slate-500">{item.divider}</div>
@@ -130,13 +139,15 @@ export default function Sidebar({ open, onClose }) {
                                 <Link
                                     href={item.href}
                                     onClick={onClose}
-                                    className={`side-link ${route().current(item.routeName) ? 'side-link-active' : 'side-link-idle'}`}
+                                    className={`side-link ${active ? 'side-link-active' : 'side-link-idle'}`}
+                                    data-tour-sidebar={item.label}
                                 >
                                     <Icon d={item.icon} />
                                     <span>{item.label}</span>
                                 </Link>
                             </div>
-                        ))}
+                            );
+                        })}
                     </nav>
 
                     <div className="m-3 rounded-box border border-slate-100 bg-slate-50 px-3 py-3">

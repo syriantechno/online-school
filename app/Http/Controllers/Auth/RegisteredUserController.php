@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-use Illuminate\Validation\ValidationException;
+use App\Support\AuthRedirect;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,9 +19,14 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('Auth/Register');
+        AuthRedirect::captureIntent($request);
+
+        return Inertia::render('Auth/Register', [
+            'redirect' => $request->query('redirect'),
+            'enrollCourse' => $request->query('enroll_course'),
+        ]);
     }
 
     /**
@@ -34,19 +39,23 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'gender' => 'required|in:male,female',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'gender' => $request->gender,
             'password' => Hash::make($request->password),
+            'role' => User::ROLE_STUDENT,
+            'is_active' => true,
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return AuthRedirect::redirectAfterAuth($request, $user);
     }
 }

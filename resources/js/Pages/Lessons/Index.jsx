@@ -20,9 +20,14 @@ export default function Index({ lessons, courses, filters, canManage }) {
                 </select>
 
                 {canManage && (
-                    <Link href={route('lessons.create')}>
-                        <PrimaryButton>درس جديد</PrimaryButton>
-                    </Link>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Link href={route('lesson-generator.studio')} className="btn-primary">
+                            استوديو الدروس
+                        </Link>
+                        <Link href={route('worksheets.create')} className="text-sm font-medium text-slate-500 hover:text-slate-800 hover:underline">
+                            من صورة
+                        </Link>
+                    </div>
                 )}
             </div>
 
@@ -45,6 +50,12 @@ export default function Index({ lessons, courses, filters, canManage }) {
                                         <Link href={route('lessons.show', lesson.id)} className="font-medium text-primary">
                                             {lesson.title}
                                         </Link>
+                                        {lesson.interactive_payload?.type === 'image_worksheet' && (
+                                            <span className="mr-2 rounded-md bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700">ورقة صورة</span>
+                                        )}
+                                        {lesson.interactive_payload?.type === 'generated_worksheet' && (
+                                            <span className="mr-2 rounded-md bg-fuchsia-50 px-2 py-1 text-[11px] font-medium text-fuchsia-700">تفاعلي</span>
+                                        )}
                                     </td>
                                     <td>{lesson.course?.title}</td>
                                     <td>{lesson.duration_minutes ? `${lesson.duration_minutes} د` : '—'}</td>
@@ -56,7 +67,18 @@ export default function Index({ lessons, courses, filters, canManage }) {
                                     <td className="space-x-2 space-x-reverse">
                                         <Link href={route('lessons.show', lesson.id)} className="text-primary hover:underline">عرض</Link>
                                         {canManage && (
-                                            <Link href={route('lessons.edit', lesson.id)} className="text-slate-500 hover:underline">تعديل</Link>
+                                            <Link
+                                                href={
+                                                    lesson.interactive_payload?.type === 'image_worksheet'
+                                                        ? route('worksheets.edit', lesson.id)
+                                                        : lesson.interactive_payload?.type === 'generated_worksheet'
+                                                          ? route('lesson-generator.edit', lesson.id)
+                                                          : route('lessons.edit', lesson.id)
+                                                }
+                                                className="text-slate-500 hover:underline"
+                                            >
+                                                تعديل
+                                            </Link>
                                         )}
                                     </td>
                                 </tr>
@@ -64,7 +86,16 @@ export default function Index({ lessons, courses, filters, canManage }) {
                         </tbody>
                     </table>
                 </div>
-                {lessons.data.length === 0 && <p className="p-8 text-center text-sm text-slate-500">لا توجد دروس.</p>}
+                {lessons.data.length === 0 && (
+                    <div className="p-8 text-center">
+                        <p className="text-sm text-slate-500">لا توجد دروس بعد.</p>
+                        {canManage && (
+                            <Link href={route('lesson-generator.studio')} className="btn-primary mt-4 inline-flex">
+                                افتح استوديو الدروس
+                            </Link>
+                        )}
+                    </div>
+                )}
             </div>
         </AuthenticatedLayout>
     );

@@ -16,12 +16,20 @@ class LearningPathController extends Controller
     public function __invoke(Request $request, Course $course): Response
     {
         $user = $request->user();
-        $course->load(['teacher:id,name', 'lessons' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order')]);
-
+        $canManage = $user->isAdmin() || ($user->isTeacher() && $course->teacher_id === $user->id);
         $enrollment = Enrollment::query()
             ->where('user_id', $user->id)
             ->where('course_id', $course->id)
             ->first();
+
+        if ($user->isStudent()) {
+            abort_unless($course->is_published, 404);
+            abort_unless($enrollment, 403, 'يجب التسجيل في الدورة أولاً.');
+        } elseif (! $canManage) {
+            abort(403);
+        }
+
+        $course->load(['teacher:id,name', 'lessons' => fn ($q) => $q->where('is_published', true)->orderBy('sort_order')]);
 
         $completedIds = LessonCompletion::query()
             ->where('user_id', $user->id)

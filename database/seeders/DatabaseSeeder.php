@@ -48,6 +48,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'الطالب أحمد',
                 'role' => User::ROLE_STUDENT,
+                'gender' => User::GENDER_MALE,
                 'password' => Hash::make('password'),
                 'is_active' => true,
                 'email_verified_at' => now(),

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\Course;
+use App\Models\Enrollment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -18,8 +19,15 @@ class BookController extends Controller
         $user = $request->user();
 
         $books = Book::query()
+            ->select(['id', 'title', 'slug', 'file_type', 'course_id', 'uploaded_by', 'is_published', 'created_at', 'updated_at'])
             ->with(['course:id,title', 'uploader:id,name'])
-            ->when($user->isStudent(), fn ($q) => $q->where('is_published', true))
+            ->when($user->isStudent(), fn ($q) => $q
+                ->where('is_published', true)
+                ->where(fn ($books) => $books
+                    ->whereNull('course_id')
+                    ->orWhere(fn ($linked) => $linked
+                        ->whereHas('course', fn ($courses) => $courses->where('is_published', true))
+                        ->whereHas('course.enrollments', fn ($enrollments) => $enrollments->where('user_id', $user->id)))))
             ->when($user->isTeacher(), fn ($q) => $q->where('uploaded_by', $user->id))
             ->latest()
             ->paginate(12)
@@ -71,13 +79,28 @@ class BookController extends Controller
 
     public function show(Request $request, Book $book): Response
     {
+        $user = $request->user();
+        $canManage = $user->isAdmin() || ($user->isTeacher() && $book->uploaded_by === $user->id);
+
+        if ($user->isStudent()) {
+            abort_unless($book->is_published, 404);
+            if ($book->course_id) {
+                abort_unless($book->course()->where('is_published', true)->exists(), 404);
+                abort_unless(
+                    Enrollment::query()->where('user_id', $user->id)->where('course_id', $book->course_id)->exists(),
+                    403
+                );
+            }
+        } elseif (! $canManage) {
+            abort(403);
+        }
+
         $book->load(['course:id,title', 'uploader:id,name', 'chapters']);
 
         return Inertia::render('Books/Show', [
             'book' => $book,
             'fileUrl' => Storage::disk('public')->url($book->file_path),
-            'canManage' => $request->user()->isAdmin()
-                || ($request->user()->isTeacher() && $book->uploaded_by === $request->user()->id),
+            'canManage' => $canManage,
             'userStars' => $request->user()->stars,
         ]);
     }

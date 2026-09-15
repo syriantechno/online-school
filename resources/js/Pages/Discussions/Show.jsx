@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { confirmAction } from '@/Components/ConfirmDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 
@@ -38,7 +39,7 @@ export default function Show({ course, thread, canReply, canModerate }) {
                         <button
                             type="button"
                             className="text-sm text-danger hover:underline"
-                            onClick={() => confirm('حذف النقاش؟') && router.delete(route('discussions.destroy', [course.id, thread.id]))}
+                            onClick={async () => await confirmAction({ message: 'سيتم حذف النقاش وردوده المرتبطة.', variant: 'danger' }) && router.delete(route('discussions.destroy', [course.id, thread.id]))}
                         >
                             حذف
                         </button>

@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { confirmAction } from '@/Components/ConfirmDialog';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, router, useForm } from '@inertiajs/react';
@@ -80,8 +81,8 @@ export default function Index({ announcements, canManage, courses }) {
                                 <button
                                     type="button"
                                     className="text-sm text-danger hover:underline"
-                                    onClick={() => {
-                                        if (confirm('حذف الإعلان؟')) {
+                                    onClick={async () => {
+                                        if (await confirmAction({ message: 'سيتم حذف هذا الإعلان من لوحة المدرسة.', variant: 'danger' })) {
                                             router.delete(route('announcements.destroy', a.id));
                                         }
                                     }}

@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { confirmAction } from '@/Components/ConfirmDialog';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link, router, useForm } from '@inertiajs/react';
@@ -67,29 +68,33 @@ export default function Index({ assignments, mySubmissions = {}, canManage, cour
                     return (
                         <div key={a.id} className="box flex flex-col p-5">
                             <div className="mb-2 flex items-start justify-between gap-2">
-                                <h3 className="font-medium text-slate-800">{a.title}</h3>
+                                <h3 className="text-lg font-black leading-8 text-slate-800">{a.title}</h3>
                                 {sub && (
-                                    <span className={`rounded-md px-2 py-1 text-[11px] ${
+                                    <span className={`shrink-0 rounded-md px-3 py-1.5 text-sm font-bold ${
                                         sub.status === 'graded' ? 'bg-success/10 text-success' : 'bg-pending/10 text-pending'
                                     }`}>
                                         {sub.status === 'graded' ? `درجة ${sub.score}` : 'مُسلَّم'}
                                     </span>
                                 )}
                             </div>
-                            <p className="text-xs text-slate-500">{a.course?.title}</p>
-                            <p className="mt-2 line-clamp-2 text-sm text-slate-600">{a.instructions || 'بدون تعليمات'}</p>
+                            <p className="mt-1 text-base font-bold text-slate-600">{a.course?.title}</p>
+                            <p className="mt-3 line-clamp-2 text-base leading-8 text-slate-700">{a.instructions || 'بدون تعليمات'}</p>
                             <div className="mt-auto flex gap-2 pt-4">
                                 <Link href={route('assignments.show', a.id)} className="rounded-md bg-primary px-3 py-2 text-sm text-white">
                                     فتح
                                 </Link>
                                 {canManage && (
-                                    <button
+                                    <><button
+                                        type="button"
+                                        className="rounded-md border border-theme-1/20 px-3 py-2 text-sm font-bold text-theme-1"
+                                        onClick={() => router.post(route('assignments.duplicate', a.id))}
+                                    >نسخ</button><button
                                         type="button"
                                         className="rounded-md border border-slate-200 px-3 py-2 text-sm text-danger"
-                                        onClick={() => confirm('حذف؟') && router.delete(route('assignments.destroy', a.id))}
+                                        onClick={async () => await confirmAction({ message: 'سيتم حذف هذا الواجب وكل ما يرتبط به.', variant: 'danger' }) && router.delete(route('assignments.destroy', a.id))}
                                     >
                                         حذف
-                                    </button>
+                                    </button></>
                                 )}
                             </div>
                         </div>

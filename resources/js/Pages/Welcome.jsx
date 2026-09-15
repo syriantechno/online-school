@@ -1,420 +1,1617 @@
-import { LogoMark } from '@/Layouts/GuestLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
+import PublicSiteLayout from '@/Components/PublicSiteLayout';
+import { useStudentTheme } from '@/contexts/StudentThemeContext';
+import { useEffect, useRef, useState } from 'react';
 
-const HERO_IMG = '/images/home/hero.jpg';
-const VIDEO_IMG = '/images/home/video.jpg';
-const BOOKS_IMG = '/images/home/books.jpg';
-const LIVE_IMG = '/images/home/live.jpg';
+export default function Welcome({ content = {}, courses = [], stats: liveStats = [] }) {
+    const { isPublicHome } = useStudentTheme();
+    const start = isPublicHome ? route('explore.index') : route('learning.my');
+    const heroRef = useRef(null);
+    const charactersRef = useRef([]);
+    const scrollRef = useRef(0);
+    const [scrollY, setScrollY] = useState(0);
+    const [activeSection, setActiveSection] = useState('hero');
 
-const courseCovers = [
-    '/images/home/course-1.jpg',
-    '/images/home/course-2.jpg',
-    '/images/home/course-3.jpg',
-    '/images/home/course-4.jpg',
-    '/images/home/course-5.jpg',
-];
+    // Track which section is currently visible for parallax
+    useEffect(() => {
+        const sections = document.querySelectorAll('.cinematic-section');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    setActiveSection(entry.target.dataset.section || 'hero');
+                }
+            });
+        }, { threshold: 0.3, rootMargin: '-80px 0px 0px 0px' });
 
-const features = [
-    {
-        title: 'دورات منظمة',
-        desc: 'مسارات تعليمية واضحة مرتبة حسب المستوى والمادة.',
-        icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
-    },
-    {
-        title: 'دروس بالفيديو',
-        desc: 'يوتيوب وفيميو وملفات مباشرة داخل الصفحة.',
-        icon: 'M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z',
-    },
-    {
-        title: 'تمارين تفاعلية',
-        desc: 'أسئلة مع تصحيح فوري وشرح للإجابة.',
-        icon: 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-    },
-    {
-        title: 'كتب رقمية',
-        desc: 'قراءة PDF وفصول تفاعلية مع نجوم.',
-        icon: 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z',
-    },
-    {
-        title: 'غرف فيديو',
-        desc: 'حصص مباشرة بين المعلم والطلاب.',
-        icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z',
-    },
-    {
-        title: 'نجوم وتقييم',
-        desc: 'تحفيز الطالب بنظام نجوم وتقييم المعلم.',
-        icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z',
-    },
-];
+        sections.forEach((sec) => observer.observe(sec));
+        return () => observer.disconnect();
+    }, []);
 
-function Icon({ d, className = 'h-6 w-6' }) {
+    // Parallax scroll effect
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrollY(window.scrollY);
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Cinematic text reveal animation
+    useEffect(() => {
+        const observerOptions = {
+            threshold: 0.15,
+            rootMargin: '0px 0px -40px 0px'
+        };
+
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        const cinematicElements = document.querySelectorAll('.cinematic-reveal');
+        cinematicElements.forEach((el, index) => {
+            setTimeout(() => {
+                revealObserver.observe(el);
+            }, index * 150);
+        });
+
+        return () => {
+            revealObserver.disconnect();
+        };
+    }, []);
+
+    // Dynamic parallax with physics-based movement
+    useEffect(() => {
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        let mouseMoving = false;
+        let velocityX = 0;
+        let velocityY = 0;
+
+        const handleMouseMove = (e) => {
+            mouseMoving = true;
+            const { innerWidth, innerHeight } = window;
+            const x = (e.clientX - innerWidth / 2) / innerWidth;
+            const y = (e.clientY - innerHeight / 2) / innerHeight;
+
+            velocityX = x - lastMouseX;
+            velocityY = y - lastMouseY;
+            lastMouseX = x;
+            lastMouseY = y;
+
+            charactersRef.current.forEach((char, index) => {
+                if (char) {
+                    const depth = Math.pow(index + 1, 0.7);
+                    const moveX = (x + velocityX * 0.5) * depth * 30;
+                    const moveY = (y + velocityY * 0.5) * depth * 25;
+                    const rotation = (index % 2 === 0) ? moveX * 0.15 : -moveX * 0.15;
+                    char.style.transform = `translate3d(${moveX}px, ${moveY}px, 0) scale(1.03) rotate(${rotation}deg)`;
+                    char.style.filter = `drop-shadow(0 10px 30px rgba(79, 70, 229, ${0.3 + Math.abs(moveX) * 0.01}))`;
+                }
+            });
+        };
+
+        const mouseMoveThrottler = () => {
+            if (mouseMoving) {
+                handleMouseMove({ clientX: lastMouseX * window.innerWidth, clientY: lastMouseY * window.innerHeight });
+                setTimeout(mouseMoveThrottler, 16);
+            }
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mousemove', mouseMoveThrottler);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mousemove', mouseMoveThrottler);
+        };
+    }, []);
+
+    // Advanced dynamic glow effects with particle system
+    const createGlow = () => {
+        const hero = heroRef.current;
+        if (!hero) return;
+
+        const glowContainer = document.createElement('div');
+        glowContainer.className = 'hero-glow-container';
+
+        const glow = document.createElement('div');
+        glow.className = 'hero-advanced-glow';
+
+        const particleCount = Math.floor(Math.random() * 3) + 2;
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'hero-glow-particle';
+            const size = Math.random() * 200 + 150;
+            const offsetX = (Math.random() - 0.5) * 80;
+            const offsetY = (Math.random() - 0.5) * 80;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${Math.random() * 100}%`;
+            particle.style.setProperty('--offset-x', `${offsetX}px`);
+            particle.style.setProperty('--offset-y', `${offsetY}px`);
+            particle.style.opacity = Math.random() * 0.4 + 0.1;
+            glow.appendChild(particle);
+        }
+
+        const blur = document.createElement('div');
+        blur.className = 'hero-glow-blur';
+        blur.style.width = `${Math.random() * 400 + 300}px`;
+        blur.style.height = `${Math.random() * 400 + 300}px`;
+        blur.style.left = `${Math.random() * 100}%`;
+        blur.style.top = `${Math.random() * 100}%`;
+        blur.style.opacity = Math.random() * 0.15 + 0.05;
+
+        glowContainer.appendChild(glow);
+        glowContainer.appendChild(blur);
+        hero.appendChild(glowContainer);
+
+        const particles = glow.querySelectorAll('.hero-glow-particle');
+        particles.forEach((particle, i) => {
+            const angle = (particleCount === 1) ? 0 : (360 / particleCount) * i;
+            const radius = Math.random() * 100 + 50;
+            const targetX = Math.cos(angle) * radius;
+            const targetY = Math.sin(angle) * radius;
+            particle.animate([
+                { transform: `translate3d(0, 0, 0) scale(0.8)`, opacity: 0 },
+                { transform: `translate3d(${targetX}px, ${targetY}px, 0) scale(1.2)`, opacity: 0.2 },
+                { transform: `translate3d(${targetX * 1.5}px, ${targetY * 1.5}px, 0) scale(0.9)`, opacity: 0 }
+            ], {
+                duration: 3000,
+                easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                fill: 'forwards'
+            });
+        });
+
+        glow.animate([
+            { opacity: 0, transform: 'scale(0.9)', filter: 'blur(0px)' },
+            { opacity: 1, transform: 'scale(1)', filter: 'blur(4px)' },
+            { opacity: 0, transform: 'scale(1.1)', filter: 'blur(8px)' }
+        ], {
+            duration: 2000,
+            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+            fill: 'forwards'
+        }).onfinish = () => {
+            glowContainer.remove();
+        };
+    };
+
+    const glowInterval = setInterval(createGlow, 1500);
+
     return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d={d} />
-        </svg>
-    );
-}
+        <PublicSiteLayout fullBleed overlayHero>
+            <Head title="عربيتي" />
+            <meta name="description" content={content.hero_description || 'عربيتي — منصة تعليم للأطفال والأهل.'} />
 
-function FeatureBand({ image, title, desc, points, reverse = false, ctaHref, ctaLabel }) {
-    return (
-        <section className={`py-16 sm:py-20 ${reverse ? 'bg-white' : 'bg-slate-50'}`}>
-            <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 sm:px-8 lg:grid-cols-2 lg:gap-16">
-                <div className={reverse ? 'lg:order-2' : ''}>
-                    <div className="overflow-hidden rounded-2xl shadow-lg shadow-theme-1/10">
-                        <img
-                            src={image}
-                            alt={title}
-                            className="h-72 w-full object-cover sm:h-96"
-                            loading="lazy"
-                        />
+            {/* === GLOBAL LAYERS === */}
+            <style>{`
+                .hero-fallback-bg {
+                    background: linear-gradient(135deg, #0f0a2e 0%, #1a0a3e 30%, #0a1628 60%, #0d1f3c 100%);
+                    background-attachment: fixed;
+                }
+
+                .arabeti-hero {
+                    position: relative;
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    overflow: hidden;
+                    background: linear-gradient(135deg, #0f0a2e 0%, #1a0a3e 30%, #0a1628 60%, #0d1f3c 100%);
+                    background-attachment: fixed;
+                }
+
+                /* === GRID LAYERS === */
+                .arabeti-hero-grid {
+                    position: absolute;
+                    inset: 0;
+                    background:
+                        radial-gradient(ellipse 80% 60% at 50% 40%, rgba(139, 92, 246, 0.08) 0%, transparent 60%),
+                        radial-gradient(ellipse 60% 50% at 70% 60%, rgba(79, 70, 229, 0.06) 0%, transparent 50%),
+                        radial-gradient(ellipse 50% 40% at 30% 70%, rgba(139, 92, 246, 0.04) 0%, transparent 40%);
+                    z-index: 0;
+                }
+
+                /* === GRADIENT ORBS === */
+                .arabeti-hero-pattern {
+                    position: absolute;
+                    inset: 0;
+                    background:
+                        radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                        radial-gradient(circle at 80% 70%, rgba(79, 70, 229, 0.1) 0%, transparent 45%),
+                        radial-gradient(circle at 50% 80%, rgba(56, 189, 248, 0.08) 0%, transparent 30%);
+                    z-index: 1;
+                    pointer-events: none;
+                }
+
+                /* === CONTENT WRAP === */
+                .home-pro-wrap {
+                    position: relative;
+                    z-index: 10;
+                }
+
+                /* === CINEMATIC HEADLINE === */
+                .cinematic-headline {
+                    font-size: clamp(3rem, 8vw, 6rem);
+                    font-weight: 800;
+                    line-height: 1.05;
+                    letter-spacing: -0.03em;
+                    text-shadow: 0 0 80px rgba(139, 92, 246, 0.3), 0 0 120px rgba(139, 92, 246, 0.15);
+                    background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 40%, #a78bfa 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+
+                .cinematic-desc {
+                    font-size: clamp(0.95rem, 2vw, 1.15rem);
+                    line-height: 1.7;
+                    max-width: 600px;
+                    color: rgba(255, 255, 255, 0.6);
+                    margin-top: 1.2rem;
+                }
+
+                .cinematic-kicker {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.4rem;
+                    padding: 0.35rem 0.9rem;
+                    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(56, 189, 248, 0.2));
+                    border: 1px solid rgba(139, 92, 246, 0.4);
+                    border-radius: 2rem;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    letter-spacing: 0.05em;
+                    text-transform: uppercase;
+                    color: #e0e7ff;
+                    margin-bottom: 1.5rem;
+                }
+
+                /* === BUTTONS === */
+                .cinematic-btn-primary {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.85rem 2rem;
+                    background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(79, 70, 229, 0.9));
+                    border: none;
+                    border-radius: 0.6rem;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    color: #ffffff;
+                    cursor: pointer;
+                    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3), 0 0 0 1px rgba(255,255,255,0.08) inset;
+                    position: relative;
+                    overflow: hidden;
+                    text-decoration: none;
+                }
+
+                .cinematic-btn-primary::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(56, 189, 248, 0.2));
+                    opacity: 0;
+                    transition: opacity 0.3s;
+                }
+
+                .cinematic-btn-primary:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 35px rgba(139, 92, 246, 0.4), 0 0 0 1px rgba(255,255,255,0.1) inset;
+                    background: linear-gradient(135deg, rgba(139, 92, 246, 1), rgba(79, 70, 229, 1));
+                }
+
+                .cinematic-btn-primary:hover::before {
+                    opacity: 1;
+                }
+
+                .cinematic-btn-primary:active {
+                    transform: translateY(0) scale(0.97);
+                }
+
+                .cinematic-btn-ghost {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.4rem;
+                    padding: 0.55rem 1.3rem;
+                    background: transparent;
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 0.5rem;
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    color: rgba(255, 255, 255, 0.75);
+                    cursor: pointer;
+                    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+                    text-decoration: none;
+                    position: relative;
+                }
+
+                .cinematic-btn-ghost:hover {
+                    border-color: rgba(255, 255, 255, 0.5);
+                    color: #ffffff;
+                    background: rgba(255, 255, 255, 0.08);
+                    transform: translateY(-1px);
+                }
+
+                .cinematic-btn-ghost:active {
+                    transform: translateY(0) scale(0.97);
+                }
+
+                /* === HERO STAGE === */
+                .arabeti-hero-stage {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 3rem;
+                    margin-top: 2rem;
+                    opacity: 0.8;
+                }
+
+                .arabeti-stage-glow {
+                    position: absolute;
+                    width: 220px;
+                    height: 220px;
+                    border-radius: 50%;
+                    background: radial-gradient(circle, rgba(139, 92, 246, 0.15), transparent 60%);
+                    filter: blur(60px);
+                    z-index: 0;
+                }
+
+                .hero-char-tilt {
+                    will-change: transform, opacity, filter;
+                    cursor: pointer;
+                    transition: transform 0.15s ease, filter 0.3s ease;
+                }
+
+                .hero-char-tilt:hover {
+                    transform: scale(1.06);
+                    z-index: 5;
+                }
+
+                .hero-char-tilt:hover .arabeti-hero-char {
+                    filter: drop-shadow(0 25px 40px rgba(79, 70, 229, 0.35));
+                }
+
+                .arabeti-hero-char {
+                    width: 180px;
+                    height: 220px;
+                    object-fit: cover;
+                    border-radius: 1rem;
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                /* === SCROLL HINT === */
+                .cinematic-scroll-hint {
+                    position: absolute;
+                    bottom: 3rem;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 0.5rem;
+                    z-index: 10;
+                    opacity: 0.7;
+                }
+
+                .cinematic-scroll-text {
+                    font-size: 0.8rem;
+                    font-weight: 500;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    color: rgba(255, 255, 255, 0.45);
+                }
+
+                .cinematic-scroll-wheel {
+                    width: 1px;
+                    height: 24px;
+                    background: rgba(255, 255, 255, 0.25);
+                    border-radius: 1px;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .cinematic-scroll-dot {
+                    position: absolute;
+                    width: 4px;
+                    height: 4px;
+                    background: rgba(255, 255, 255, 0.8);
+                    border-radius: 50%;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    animation: scroll-dot-bounce 2s ease-in-out infinite;
+                }
+
+                @keyframes scroll-dot-bounce {
+                    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+                    50% { transform: translate(-50%, -50%) scale(1.8); opacity: 1; }
+                }
+
+                /* === STATS BAND === */
+                .arabeti-stats-band {
+                    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, transparent 100%);
+                    padding: 3rem 0;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .arabeti-stats-row {
+                    display: flex;
+                    gap: 2rem;
+                    justify-content: center;
+                    flex-wrap: wrap;
+                }
+
+                .arabeti-stat {
+                    text-align: center;
+                    padding: 1rem 1.2rem;
+                    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(56, 189, 248, 0.05));
+                    border: 1px solid rgba(139, 92, 246, 0.15);
+                    border-radius: 0.75rem;
+                    min-width: 100px;
+                    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .arabeti-stat::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.15), transparent 60%);
+                    opacity: 0;
+                    transition: opacity 0.3s;
+                }
+
+                .arabeti-stat:hover {
+                    transform: translateY(-3px);
+                    border-color: rgba(139, 92, 246, 0.3);
+                    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.15);
+                }
+
+                .arabeti-stat:hover::before {
+                    opacity: 1;
+                }
+
+                .arabeti-stat strong {
+                    display: block;
+                    font-size: 1.8rem;
+                    font-weight: 800;
+                    background: linear-gradient(135deg, #e0e7ff, #a78bfa);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                    position: relative;
+                    z-index: 1;
+                }
+
+                .arabeti-stat span {
+                    font-size: 0.7rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    color: rgba(255, 255, 255, 0.5);
+                    position: relative;
+                    z-index: 1;
+                }
+
+                /* === LEVELS SECTION === */
+                .home-pro-section {
+                    padding: 5rem 0;
+                    background: linear-gradient(180deg, #0f0a2e 0%, #1a0a3e 50%, #0a1628 100%);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .home-pro-section::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background:
+                        radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+                        radial-gradient(circle at 80% 20%, rgba(56, 189, 248, 0.06) 0%, transparent 30%);
+                    pointer-events: none;
+                }
+
+                .home-pro-wrap {
+                    position: relative;
+                    z-index: 1;
+                }
+
+                .home-pro-section-head {
+                    text-align: center;
+                    margin-bottom: 3rem;
+                }
+
+                .home-pro-kicker {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.4rem;
+                    padding: 0.3rem 0.8rem;
+                    background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(139, 92, 246, 0.2));
+                    border: 1px solid rgba(56, 189, 248, 0.3);
+                    border-radius: 1.5rem;
+                    font-size: 0.7rem;
+                    font-weight: 600;
+                    letter-spacing: 0.06em;
+                    text-transform: uppercase;
+                    color: #e0e7ff;
+                    margin-bottom: 1rem;
+                }
+
+                .home-pro-section-head h2 {
+                    font-size: clamp(2rem, 4vw, 3rem);
+                    font-weight: 700;
+                    color: #ffffff;
+                    line-height: 1.1;
+                }
+
+                .home-pro-section-head h2 em {
+                    font-style: normal;
+                    background: linear-gradient(135deg, #e0e7ff, #a78bfa);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+
+                .home-pro-section-head p {
+                    font-size: 0.95rem;
+                    color: rgba(255, 255, 255, 0.5);
+                    margin-top: 0.5rem;
+                }
+
+                .home-pro-level-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                    gap: 1.25rem;
+                    position: relative;
+                    z-index: 1;
+                }
+
+                .home-pro-level-card {
+                    position: relative;
+                    background: rgba(255, 255, 255, 0.04);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 1rem;
+                    padding: 1.5rem;
+                    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+                    overflow: hidden;
+                    cursor: pointer;
+                    text-decoration: none;
+                    display: block;
+                }
+
+                .home-pro-level-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 2px;
+                    background: linear-gradient(90deg, #8b5cf6, #38bdf8);
+                    transform: scaleX(0);
+                    transform-origin: left;
+                    transition: transform 0.4s ease;
+                }
+
+                .home-pro-level-card:hover {
+                    transform: translateY(-4px);
+                    border-color: rgba(139, 92, 246, 0.3);
+                    background: rgba(255, 255, 255, 0.07);
+                    box-shadow: 0 15px 40px rgba(139, 92, 246, 0.12);
+                }
+
+                .home-pro-level-card:hover::before {
+                    transform: scaleX(1);
+                }
+
+                .home-pro-level-icon {
+                    width: 48px;
+                    height: 48px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(56, 189, 248, 0.15));
+                    border-radius: 0.75rem;
+                    margin-bottom: 1rem;
+                    transition: all 0.3s;
+                }
+
+                .home-pro-level-card:hover .home-pro-level-icon {
+                    background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(56, 189, 248, 0.25));
+                    transform: scale(1.1);
+                }
+
+                .home-pro-level-card strong {
+                    display: block;
+                    font-size: 1.05rem;
+                    color: #ffffff;
+                    margin-bottom: 0.25rem;
+                }
+
+                .home-pro-level-card small {
+                    display: block;
+                    font-size: 0.8rem;
+                    color: rgba(255, 255, 255, 0.4);
+                    margin-bottom: 0.5rem;
+                }
+
+                .home-pro-level-card p {
+                    font-size: 0.8rem;
+                    color: rgba(255, 255, 255, 0.35);
+                    line-height: 1.5;
+                    margin-bottom: 0.75rem;
+                }
+
+                .home-pro-level-go {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.3rem;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    color: #38bdf8;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    padding: 0.3rem 0.8rem;
+                    background: rgba(56, 189, 248, 0.15);
+                    border: 1px solid rgba(56, 189, 248, 0.3);
+                    border-radius: 1rem;
+                    transition: all 0.3s;
+                }
+
+                .home-pro-level-card:hover .home-pro-level-go {
+                    background: rgba(56, 189, 248, 0.25);
+                    border-color: rgba(56, 189, 248, 0.5);
+                }
+
+                /* === HOW IT WORKS === */
+                .home-pro-section-soft {
+                    padding: 5rem 0;
+                    background: linear-gradient(180deg, #0f0a2e 0%, #1a0a3e 50%, #0a1628 100%);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .home-pro-section-soft::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background:
+                        radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 30% 70%, rgba(139, 92, 246, 0.04) 0%, transparent 40%);
+                    pointer-events: none;
+                }
+
+                .home-pro-journey {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 1rem;
+                    position: relative;
+                    z-index: 1;
+                }
+
+                .home-pro-journey-step {
+                    text-align: center;
+                    padding: 1.5rem 1rem;
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.06);
+                    border-radius: 1rem;
+                    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .home-pro-journey-step::after {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(135deg, transparent 0%, rgba(139, 92, 246, 0.05) 50%, transparent 100%);
+                    opacity: 0;
+                    transition: opacity 0.4s;
+                }
+
+                .home-pro-journey-step:hover {
+                    transform: translateY(-3px);
+                    border-color: rgba(139, 92, 246, 0.25);
+                    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.08);
+                }
+
+                .home-pro-journey-step:hover::after {
+                    opacity: 1;
+                }
+
+                .home-pro-journey-step strong {
+                    display: block;
+                    font-size: 1.2rem;
+                    color: #e0e7ff;
+                    margin-bottom: 0.5rem;
+                }
+
+                .home-pro-journey-step p {
+                    font-size: 0.78rem;
+                    color: rgba(255, 255, 255, 0.35);
+                    line-height: 1.5;
+                }
+
+                /* === PARENTS SECTION === */
+                .home-pro-section {
+                    padding: 5rem 0;
+                    background: linear-gradient(180deg, #0f0a2e 0%, #1a0a3e 50%, #0a1628 100%);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .home-pro-section::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background:
+                        radial-gradient(circle at 70% 30%, rgba(56, 189, 248, 0.06) 0%, transparent 40%),
+                        radial-gradient(circle at 20% 70%, rgba(139, 92, 246, 0.04) 0%, transparent 40%);
+                    pointer-events: none;
+                }
+
+                .home-pro-parents-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 1.25rem;
+                    position: relative;
+                    z-index: 1;
+                }
+
+                .home-pro-section-head {
+                    text-align: center;
+                    margin-bottom: 2.5rem;
+                }
+
+                .home-pro-section-head-start {
+                    padding-top: 1.5rem;
+                }
+
+                .home-pro-section-head h2 {
+                    font-size: clamp(2rem, 4vw, 2.5rem);
+                    font-weight: 700;
+                    color: #ffffff;
+                    line-height: 1.1;
+                }
+
+                .home-pro-section-head h2 em {
+                    font-style: normal;
+                    background: linear-gradient(135deg, #e0e7ff, #a78bfa);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+
+                .home-pro-section-head p {
+                    font-size: 0.95rem;
+                    color: rgba(255, 255, 255, 0.5);
+                    margin-top: 0.5rem;
+                }
+
+                .home-pro-parent-cards {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1rem;
+                    position: relative;
+                    z-index: 1;
+                }
+
+                .home-pro-parent-card {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 1rem;
+                    padding: 1.25rem 1.5rem;
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.06);
+                    border-radius: 0.75rem;
+                    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .home-pro-parent-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 1px;
+                    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.3), transparent);
+                    opacity: 0;
+                    transition: opacity 0.3s;
+                }
+
+                .home-pro-parent-card:hover {
+                    transform: translateX(4px);
+                    border-color: rgba(139, 92, 246, 0.25);
+                    background: rgba(255, 255, 255, 0.05);
+                }
+
+                .home-pro-parent-card:hover::before {
+                    opacity: 1;
+                }
+
+                .home-pro-parent-card h3 {
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    color: #e0e7ff;
+                    margin-bottom: 0.25rem;
+                }
+
+                .home-pro-parent-card p {
+                    font-size: 0.78rem;
+                    color: rgba(255, 255, 255, 0.4);
+                    line-height: 1.5;
+                }
+
+                /* === CTA SECTION === */
+                .home-pro-cta-band {
+                    padding: 5rem 0;
+                    background: linear-gradient(180deg, #0f0a2e 0%, #1a0a3e 50%, #0a1628 100%);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .home-pro-cta-band::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background:
+                        radial-gradient(circle at 50% 30%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 30% 80%, rgba(56, 189, 248, 0.06) 0%, transparent 40%);
+                    pointer-events: none;
+                }
+
+                .home-pro-cta-inner {
+                    text-align: center;
+                    position: relative;
+                    z-index: 1;
+                }
+
+                .home-pro-cta-inner h2 {
+                    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+                    font-weight: 700;
+                    color: #ffffff;
+                    line-height: 1.2;
+                    margin-bottom: 0.75rem;
+                }
+
+                .home-pro-cta-inner p {
+                    font-size: 0.95rem;
+                    color: rgba(255, 255, 255, 0.5);
+                    margin-bottom: 1.5rem;
+                }
+
+                .home-pro-cta-row {
+                    display: flex;
+                    justify-content: center;
+                    gap: 1rem;
+                    flex-wrap: wrap;
+                    position: relative;
+                    z-index: 1;
+                }
+
+                /* === FLOATING ORBS === */
+                .hero-dynamic-glow {
+                    position: absolute;
+                    border-radius: 50%;
+                    background: radial-gradient(circle, rgba(139, 92, 246, 0.15), transparent 70%);
+                    filter: blur(2px);
+                    animation: floating-orb 4s ease-in-out infinite;
+                    pointer-events: none;
+                    z-index: -1;
+                    transition: transform 0.1s ease;
+                }
+
+                .hero-dynamic-glow:nth-child(2) {
+                    animation-delay: 1s;
+                    width: 160px;
+                    height: 160px;
+                    background: radial-gradient(circle, rgba(56, 189, 248, 0.12), transparent 60%);
+                }
+
+                .hero-dynamic-glow:nth-child(3) {
+                    animation-delay: 2s;
+                    width: 120px;
+                    height: 120px;
+                    background: radial-gradient(circle, rgba(139, 92, 246, 0.1), transparent 60%);
+                }
+
+                @keyframes floating-orb {
+                    0%, 100% {
+                        transform: translate3d(0, 0, 0) rotate(0deg);
+                        opacity: 0.2;
+                    }
+                    25% {
+                        transform: translate3d(10px, -15px, 0) rotate(180deg);
+                        opacity: 0.4;
+                    }
+                    50% {
+                        transform: translate3d(20px, -25px, 0) rotate(360deg);
+                        opacity: 0.5;
+                    }
+                    75% {
+                        transform: translate3d(-10px, -10px, 0) rotate(540deg);
+                        opacity: 0.3;
+                    }
+                }
+
+                /* === SHIMMER TEXT === */
+                .shimmer-text {
+                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+                    background-size: 200% 100%;
+                    animation: shimmer 3s infinite;
+                    -webkit-background-clip: text;
+                    background-clip: text;
+                    color: transparent;
+                }
+
+                .shimmer-text {
+                    font-size: 0.75rem;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    font-weight: 500;
+                    margin-top: 0.5rem;
+                }
+
+                /* === GLASS EFFECT === */
+                .glass-effect {
+                    backdrop-filter: blur(12px);
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                    border-radius: 0.75rem;
+                }
+
+                /* === SCROLL REVEAL === */
+                .revealed {
+                    opacity: 1 !important;
+                    transform: translate3d(0, 0, 0) scale(1);
+                    transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+                }
+
+                .cinematic-reveal {
+                    opacity: 0;
+                    transform: translate3d(0, 30px, 0) scale(0.95);
+                    filter: blur(4px);
+                    animation-fill-mode: forwards;
+                    animation-duration: 1.2s;
+                    animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+                }
+
+                /* === SCROLL ANIMATIONS === */
+                .cinematic-section {
+                    position: relative;
+                    will-change: transform, opacity;
+                }
+
+                .cinematic-section.revealed {
+                    opacity: 1 !important;
+                    transform: translate3d(0, 0, 0) scale(1);
+                }
+
+                .cinematic-section-depth-1 {
+                    transform: translate3d(0, 20px, 0);
+                    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+                }
+
+                .cinematic-section-depth-2 {
+                    transform: translate3d(0, 40px, 0);
+                    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+                }
+
+                .cinematic-section-depth-3 {
+                    transform: translate3d(0, 60px, 0);
+                    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+                }
+
+                .cinematic-section-depth-4 {
+                    transform: translate3d(0, 80px, 0);
+                    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+                }
+
+                /* === CHARACTER FLOATING ANIMATION === */
+                .arabeti-char-float {
+                    animation: char-float 4s ease-in-out infinite;
+                    will-change: transform, opacity, filter;
+                }
+
+                @keyframes char-float {
+                    0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+                    25% { transform: translate3d(0, -8px, 0) rotate(1deg); }
+                    50% { transform: translate3d(0, -4px, 0) rotate(-1deg); }
+                    75% { transform: translate3d(0, -12px, 0) rotate(0.5deg); }
+                }
+
+                /* === CHARACTER WAVE ANIMATION === */
+                .arabeti-char-wave {
+                    animation: char-wave 3s ease-in-out infinite;
+                    will-change: transform;
+                }
+
+                @keyframes char-wave {
+                    0%, 100% { transform: translate3d(0, 0, 0) scaleY(1); }
+                    50% { transform: translate3d(0, -6px, 0) scaleY(1.05); }
+                }
+
+                /* === CHARACTER GLOW PULSE === */
+                .arabeti-char-glow {
+                    animation: char-glow-pulse 2s ease-in-out infinite;
+                }
+
+                @keyframes char-glow-pulse {
+                    0%, 100% { filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.3)); }
+                    50% { filter: drop-shadow(0 0 40px rgba(139, 92, 246, 0.6)); }
+                }
+
+                /* === SCROLL INDICATOR === */
+                .scroll-indicator {
+                    animation: scroll-indicator-bounce 2s ease-in-out infinite;
+                }
+
+                @keyframes scroll-indicator-bounce {
+                    0%, 100% { transform: translateY(0); opacity: 0.7; }
+                    50% { transform: translateY(8px); opacity: 1; }
+                }
+
+                /* === PARALLAX LAYER === */
+                .parallax-layer {
+                    will-change: transform, opacity;
+                    transition: transform 0.1s ease-out;
+                }
+
+                /* === ENTRANCE ANIMATION === */
+                @keyframes cinematic-text-reveal {
+                    from { opacity: 0; transform: translate3d(0, 30px, 0) scale(0.95); filter: blur(4px); }
+                    to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+                }
+
+                /* === MOBILE RESPONSIVE === */
+                @media (max-width: 768px) {
+                    .arabeti-hero-stage {
+                        gap: 1.5rem;
+                    }
+
+                    .arabeti-stage-glow {
+                        width: 120px;
+                        height: 120px;
+                    }
+
+                    .hero-char-tilt {
+                        transform: scale(0.9);
+                    }
+
+                    .hero-char-tilt:hover {
+                        transform: scale(1.06);
+                    }
+
+                    .arabeti-hero-char {
+                        width: 140px;
+                        height: 170px;
+                    }
+
+                    .cinematic-headline {
+                        font-size: clamp(2rem, 10vw, 4rem);
+                    }
+
+                    .arabeti-hero-stage {
+                        flex-direction: column-reverse;
+                        gap: 1.5rem;
+                    }
+
+                    .arabeti-stage-glow {
+                        width: 160px;
+                        height: 160px;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .arabeti-hero-stage {
+                        gap: 1rem;
+                    }
+
+                    .arabeti-stage-glow {
+                        width: 100px;
+                        height: 100px;
+                    }
+
+                    .hero-char-tilt {
+                        transform: scale(0.85);
+                    }
+
+                    .hero-char-tilt:hover {
+                        transform: scale(1.06);
+                    }
+
+                    .arabeti-hero-char {
+                        width: 120px;
+                        height: 150px;
+                    }
+
+                    .cinematic-headline {
+                        font-size: clamp(1.8rem, 12vw, 3rem);
+                    }
+                }
+
+                /* === REDUCED MOTION === */
+                @media (prefers-reduced-motion: reduce) {
+                    .arabeti-hero-stage,
+                    .arabeti-stage-glow,
+                    .hero-char-tilt,
+                    .arabeti-hero-char,
+                    .cinematic-scroll-hint,
+                    .cinematic-scroll-dot,
+                    .hero-glow-container,
+                    .hero-advanced-glow,
+                    .hero-glow-particle,
+                    .hero-glow-blur,
+                    .arabeti-hero-side,
+                    .arabeti-char-float,
+                    .arabeti-char-wave,
+                    .arabeti-char-glow,
+                    .cinematic-godray,
+                    .cinematic-godray-boy,
+                    .cinematic-godray-girl,
+                    .hero-rimlight,
+                    .hero-rimlight-boy,
+                    .hero-rimlight-girl,
+                    .hero-dynamic-glow,
+                    .shimmer-text,
+                    .scroll-indicator {
+                        animation: none !important;
+                    }
+
+                    .cinematic-reveal {
+                        animation: none !important;
+                        opacity: 1 !important;
+                        transform: none !important;
+                    }
+
+                    .arabeti-hero-copy > * {
+                        animation: none !important;
+                    }
+
+                    .parallax-layer {
+                        transition: none !important;
+                    }
+                }
+
+                /* === SCROLL-DRIVEN TRANSITIONS === */
+                .cinematic-section.is-active-depth-1 {
+                    transform: translate3d(0, 20px, 0);
+                    opacity: 1;
+                }
+
+                .cinematic-section.is-active-depth-2 {
+                    transform: translate3d(0, 40px, 0);
+                    opacity: 1;
+                }
+
+                .cinematic-section.is-active-depth-3 {
+                    transform: translate3d(0, 60px, 0);
+                    opacity: 1;
+                }
+
+                .cinematic-section.is-active-depth-4 {
+                    transform: translate3d(0, 80px, 0);
+                    opacity: 1;
+                }
+            `}</style>
+
+            {/* === HERO SECTION === */}
+            <section
+                ref={heroRef}
+                className="arabeti-hero cinematic-section cinematic-section-depth-1"
+                data-section="hero"
+                style={{ backgroundAttachment: 'fixed' }}
+            >
+                {/* Grid layers */}
+                <div className="arabeti-hero-grid">
+                    <div className="grid-bg-pattern"></div>
+                </div>
+
+                {/* Gradient orbs */}
+                <div className="arabeti-hero-pattern"></div>
+
+                {/* Godray lighting effects - using separate classes to avoid conflicts with existing CSS */}
+                <div className="cinematic-godray" style={{ position: 'absolute', inset: '0', background: 'linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.35) 30%, rgba(139, 92, 246, 0.15) 60%, transparent 100%)', filter: 'blur(60px)' }}></div>
+                <div className="cinematic-godray-boy" style={{ position: 'absolute', bottom: '25%', right: '10%', width: '360px', height: '560px', background: 'radial-gradient(circle at 78% 28%, rgba(255,255,255,.52) 0%, transparent 65%)' }}></div>
+                <div className="cinematic-godray-girl" style={{ position: 'absolute', top: '15%', left: '6%', width: '340px', height: '540px', background: 'radial-gradient(circle at 22% 28%, rgba(255,255,255,.46) 0%, transparent 65%)' }}></div>
+
+                {/* Glow orbs */}
+                <div className="hero-rimlight" style={{ position: 'absolute', top: '30%', left: '10%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 60%)', animation: 'rimlight-breathe 6s ease-in-out infinite' }}></div>
+                <div className="hero-rimlight-boy" style={{ position: 'absolute', bottom: '20%', right: '15%', width: '35%', height: '35%', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 55%)', animation: 'rimlight-breathe 8s ease-in-out infinite 1s' }}></div>
+                <div className="hero-rimlight-girl" style={{ position: 'absolute', top: '10%', right: '30%', width: '30%', height: '30%', background: 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 50%)', animation: 'rimlight-breathe 7s ease-in-out infinite 2s' }}></div>
+
+                {/* Dynamic glow particles */}
+                <div className="hero-glow-container" ref={heroRef}></div>
+
+                {/* Hero content */}
+                <div className="home-pro-wrap">
+                    <div className="arabeti-hero-copy text-center px-4 sm:px-6 max-w-2xl mx-auto">
+                        {/* Kicker */}
+                        <span className="cinematic-kicker inline-flex">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                            منصة عربية للأطفال
+                        </span>
+
+                        {/* Headline */}
+                        <h1 className="cinematic-headline">
+                            عربيتي
+                        </h1>
+
+                        {/* Description */}
+                        <p className="cinematic-desc">
+                            عالم تعليمي سحري للأطفال، حيث تتجول الشخصيات المميزة في دروس تفاعلية تعلّم من خلالها أطفالك كأنهم يغامرون في قصة.
+                        </p>
+
+                        {/* CTA */}
+                        <div className="flex flex-wrap items-center justify-center gap-3">
+                            <a href={route('explore.index')} className="cinematic-btn-primary">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7l5 5-5 5"/></svg>
+                                ابدأ التعلم
+                            </a>
+                            <a href={route('explore.index')} className="cinematic-btn-ghost">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                استكشف الدورات
+                            </a>
+                        </div>
                     </div>
                 </div>
-                <div className={reverse ? 'lg:order-1' : ''}>
-                    <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                        ميزة المنصة
+
+                {/* Scroll hint */}
+                <div className="cinematic-scroll-hint">
+                    <span className="cinematic-scroll-text">اسحب للتمرير</span>
+                    <div className="cinematic-scroll-wheel">
+                        <div className="cinematic-scroll-dot"></div>
+                    </div>
+                </div>
+            </section>
+
+            {/* === ENTER THE WORLD === */}
+            <section
+                ref={heroRef}
+                className="arabeti-hero cinematic-section cinematic-section-depth-2"
+                data-section="world"
+                style={{ backgroundAttachment: 'fixed' }}
+            >
+                {/* Grid layers */}
+                <div className="arabeti-hero-grid">
+                    <div className="grid-bg-pattern"></div>
+                </div>
+
+                {/* Gradient orbs */}
+                <div className="arabeti-hero-pattern"></div>
+
+                {/* Godray lighting effects */}
+                <div className="cinematic-godray" style={{ position: 'absolute', inset: '0', background: 'linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.35) 30%, rgba(139, 92, 246, 0.15) 60%, transparent 100%)', filter: 'blur(60px)' }}></div>
+                <div className="cinematic-godray-boy" style={{ position: 'absolute', bottom: '25%', right: '10%', width: '360px', height: '560px', background: 'radial-gradient(circle at 78% 28%, rgba(255,255,255,.52) 0%, transparent 65%)' }}></div>
+                <div className="cinematic-godray-girl" style={{ position: 'absolute', top: '15%', left: '6%', width: '340px', height: '540px', background: 'radial-gradient(circle at 22% 28%, rgba(255,255,255,.46) 0%, transparent 65%)' }}></div>
+
+                {/* Glow orbs */}
+                <div className="hero-rimlight" style={{ position: 'absolute', top: '30%', left: '10%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 60%)', animation: 'rimlight-breathe 6s ease-in-out infinite' }}></div>
+                <div className="hero-rimlight-boy" style={{ position: 'absolute', bottom: '20%', right: '15%', width: '35%', height: '35%', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 55%)', animation: 'rimlight-breathe 8s ease-in-out infinite 1s' }}></div>
+                <div className="hero-rimlight-girl" style={{ position: 'absolute', top: '10%', right: '30%', width: '30%', height: '30%', background: 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 50%)', animation: 'rimlight-breathe 7s ease-in-out infinite 2s' }}></div>
+
+                {/* Dynamic glow particles */}
+                <div className="hero-glow-container" ref={heroRef}></div>
+
+                {/* Hero content */}
+                <div className="home-pro-wrap text-center px-4 sm:px-6 max-w-2xl mx-auto">
+                    <span className="cinematic-kicker inline-flex">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+                        دخول العالم
                     </span>
-                    <h2 className="mt-4 text-2xl font-medium text-slate-800 sm:text-3xl">{title}</h2>
-                    <p className="mt-4 text-base leading-8 text-slate-500">{desc}</p>
-                    <ul className="mt-6 space-y-3">
-                        {points.map((p) => (
-                            <li key={p} className="flex items-start gap-3 text-sm text-slate-600">
-                                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success/10 text-success">
-                                    <Icon d="M4.5 12.75l6 6 9-13.5" className="h-3.5 w-3.5" />
-                                </span>
-                                <span>{p}</span>
-                            </li>
-                        ))}
-                    </ul>
-                    {ctaHref && (
-                        <Link
-                            href={ctaHref}
-                            className="mt-8 inline-flex min-h-11 items-center rounded-full bg-theme-1 px-6 text-sm font-medium text-white transition hover:bg-theme-2"
-                        >
-                            {ctaLabel}
-                        </Link>
-                    )}
+                    <h2 className="cinematic-headline mt-3">
+                        دخل إلى عالم التعلم
+                    </h2>
+                    <p className="cinematic-desc mt-3">
+                        انضم إلى شخصياتك المفضلة في رحلة تعليمية تفاعلية. استكشف مواضيع متنوعة مع شخصيات مذهلة توجهك خلال دروسًا سحرية.
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
+                        <a href={route('explore.index')} className="cinematic-btn-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7l5 5-5 5"/></svg>
+                            ابدأ التعلم
+                        </a>
+                        <a href={route('explore.index')} className="cinematic-btn-ghost">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                            استكشف الدورات
+                        </a>
+                    </div>
                 </div>
-            </div>
-        </section>
-    );
-}
+            </section>
 
-export default function Welcome({ auth, stats = [], courses = [] }) {
-    const { appName, auth: sharedAuth } = usePage().props;
-    const user = auth?.user ?? sharedAuth?.user ?? null;
-    const name = appName || 'المدرسة الإلكترونية';
+            {/* === MEET THE GUIDES === */}
+            <section className="home-pro-section cinematic-section cinematic-section-depth-3" data-section="guides">
+                <div className="home-pro-wrap text-center px-4 sm:px-6 max-w-2xl mx-auto">
+                    <span className="cinematic-kicker inline-flex">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6m-3-4h-3"/></svg>
+                        شخصياتنا المميزة
+                    </span>
+                    <h2 className="cinematic-headline mt-3">
+                        اجمع معنا
+                    </h2>
+                    <p className="cinematic-desc mt-1">
+                        شخصيتان مذهلتان توجهان طفلك خلال رحلة تعليمية غامرة.
+                    </p>
+                </div>
 
-    return (
-        <>
-            <Head title={name} />
-
-            <div className="min-h-screen bg-white">
-                {/* ===== HERO ===== */}
-                <section className="relative min-h-[45vh] overflow-hidden">
-                    <img
-                        src={HERO_IMG}
-                        alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-l from-theme-1/95 via-theme-1/80 to-theme-2/70" />
-                    <div className="absolute inset-0 bg-texture-white opacity-40" />
-
-                    <div className="relative z-10 flex min-h-[45vh] flex-col">
-                        <header className="px-5 pt-5 sm:px-8">
-                            <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-                                <Link href="/" className="flex items-center gap-3 text-white">
-                                    <LogoMark className="!h-11 !w-11 border-white/30 [&_>div]:!h-10 [&_>div]:!w-10" />
-                                    <div>
-                                        <p className="text-base font-medium sm:text-lg">{name}</p>
-                                        <p className="text-xs text-white/70">منصة تعليم عربية</p>
-                                    </div>
-                                </Link>
-                                <nav className="flex items-center gap-2">
-                                    {user ? (
-                                        <Link
-                                            href={route('dashboard')}
-                                            className="rounded-full bg-white px-5 py-2.5 text-sm font-medium text-theme-1 shadow-sm transition hover:bg-slate-50"
-                                        >
-                                            لوحة التحكم
-                                        </Link>
-                                    ) : (
-                                        <>
-                                            <Link
-                                                href={route('login')}
-                                                className="rounded-full px-4 py-2.5 text-sm font-medium text-white/90 transition hover:bg-white/10"
-                                            >
-                                                دخول
-                                            </Link>
-                                            <Link
-                                                href={route('register')}
-                                                className="rounded-full bg-white px-5 py-2.5 text-sm font-medium text-theme-1 shadow-sm transition hover:bg-slate-50"
-                                            >
-                                                إنشاء حساب
-                                            </Link>
-                                        </>
-                                    )}
-                                </nav>
-                            </div>
-                        </header>
-
-                        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-5 py-8 sm:px-8 lg:py-10">
-                            <div className="max-w-2xl">
-                                <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm text-white/90 backdrop-blur-sm">
-                                    <Icon d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.908.076-1.747.17-2.658.813m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" className="h-4 w-4" />
-                                    تعليم تفاعلي عن بُعد
-                                </p>
-                                <h1 className="text-4xl font-medium leading-[1.35] text-white sm:text-5xl lg:text-[3.25rem]">
-                                    {name}
-                                </h1>
-                                <p className="mt-5 max-w-xl text-lg leading-9 text-white/80">
-                                    دروس فيديو، تمارين تفاعلية، كتب رقمية، وغرف اتصال مرئي — مع نظام نجوم يحفّز الطالب على التقدّم.
-                                </p>
-                                <div className="mt-9 flex flex-wrap gap-3">
-                                    <Link
-                                        href={user ? route('dashboard') : route('register')}
-                                        className="inline-flex min-h-12 items-center rounded-full bg-white px-7 text-sm font-medium text-theme-1 shadow-md transition hover:bg-slate-50"
-                                    >
-                                        {user ? 'متابعة التعلم' : 'ابدأ مجاناً الآن'}
-                                    </Link>
-                                    <a
-                                        href="#features"
-                                        className="inline-flex min-h-12 items-center rounded-full border border-white/35 bg-white/10 px-7 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"
-                                    >
-                                        اكتشف المزايا
-                                    </a>
-                                </div>
+                {/* Two characters in cinematic scene */}
+                <div className="home-pro-journey">
+                    {/* Boy character */}
+                    <div className="home-pro-journey-step">
+                        <div className="arabeti-char-float arabeti-char-glow mb-3">
+                            <div className="arabeti-hero-side mx-auto" style={{ background: 'linear-gradient(135deg, #0f0a2e 0%, #1a0a3e 30%, #0a1628 60%, #0d1f3c 100%)', width: '160px', height: '200px', objectFit: 'cover', borderRadius: '1rem', boxShadow: '0 10px 40px rgba(0,0,0,0.3)' }}>
+                                <img src="https://picsum.photos/seed/boy-char-1/160/200.jpg" alt="شخصية الطفل" loading="lazy" />
                             </div>
                         </div>
+                        <h3 className="text-lg font-bold text-white mb-1">الطفل</h3>
+                        <p className="text-sm text-slate-400">مفكر وفضولي يوجه الطفل خلال دروسه</p>
                     </div>
-                </section>
 
-                {/* ===== STATS ===== */}
-                <section className="relative z-20 -mt-10 px-5 sm:px-8">
-                    <div className="mx-auto grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {stats.map((stat) => (
-                            <div key={stat.label} className="box flex items-center gap-4 p-5">
-                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-b from-theme-1 to-theme-2 text-white shadow-sm">
-                                    <Icon d={stat.icon} className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-slate-500">{stat.label}</p>
-                                    <p className="mt-0.5 text-2xl font-medium text-slate-800">{stat.value}</p>
-                                </div>
+                    {/* Girl character */}
+                    <div className="home-pro-journey-step">
+                        <div className="arabeti-char-float arabeti-char-glow mb-3" style={{ animationDelay: '1s' }}>
+                            <div className="arabeti-hero-side mx-auto" style={{ background: 'linear-gradient(135deg, #0f0a2e 0%, #1a0a3e 30%, #0a1628 60%, #0d1f3c 100%)', width: '160px', height: '200px', objectFit: 'cover', borderRadius: '1rem', boxShadow: '0 10px 40px rgba(0,0,0,0.3)' }}>
+                                <img src="https://picsum.photos/seed/girl-char-1/160/200.jpg" alt="شخصية الطفلة" loading="lazy" />
                             </div>
-                        ))}
+                        </div>
+                        <h3 className="text-lg font-bold text-white mb-1">الطفلة</h3>
+                        <p className="text-sm text-slate-400">مستعيرة ومرشدة توجه الطفل خلال دروسه</p>
                     </div>
-                </section>
+                </div>
+            </section>
 
-                {/* ===== FEATURE ICONS GRID ===== */}
-                <section id="features" className="px-5 py-20 sm:px-8">
-                    <div className="mx-auto max-w-6xl">
-                        <div className="mx-auto max-w-2xl text-center">
-                            <h2 className="text-2xl font-medium text-slate-800 sm:text-3xl">كل ما تحتاجه للتعلّم</h2>
-                            <p className="mt-3 text-base leading-8 text-slate-500">
-                                أدوات متكاملة للطالب والمعلم في واجهة عربية بسيطة وواضحة.
+            {/* === LEARN WITH THEM === */}
+            <section className="home-pro-section cinematic-section cinematic-section-depth-4" data-section="learn">
+                <div className="home-pro-wrap text-center px-4 sm:px-6 max-w-2xl mx-auto">
+                    <span className="cinematic-kicker inline-flex">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                        دروس تفاعلية
+                    </span>
+                    <h2 className="cinematic-headline mt-3">
+                        تعلم معاً
+                    </h2>
+                    <p className="cinematic-desc mt-1">
+                        شاهد كيف تعلّم أطفالك من خلال دروس تفاعلية مع شخصياتنا.
+                    </p>
+                </div>
+
+                {/* Interactive lesson demo */}
+                <div className="home-pro-journey">
+                    <div className="home-pro-journey-step" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(139, 92, 246, 0.2)' }}>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+                                🌟
+                            </div>
+                            <div>
+                                <h3 className="text-white font-bold text-sm">الطفلة تشرح</h3>
+                                <p className="text-xs text-slate-400">لماذا ألوان السماء؟</p>
+                            </div>
+                        </div>
+                        <div className="glass-effect p-3 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white text-xs font-bold">🧑</div>
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-xs font-bold">👧</div>
+                            </div>
+                            <p className="text-xs text-slate-300 leading-relaxed">
+                                السماء زرقاء بسبب انعكاس ضوء الشمس على جزيئات الهواء. شاهد الفيديو التعليمي الكامل!
                             </p>
                         </div>
-
-                        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                            {features.map((f) => (
-                                <div
-                                    key={f.title}
-                                    className="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/20 hover:shadow-md"
-                                >
-                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-gradient-to-b group-hover:from-theme-1 group-hover:to-theme-2 group-hover:text-white">
-                                        <Icon d={f.icon} />
-                                    </div>
-                                    <h3 className="text-base font-medium text-slate-800">{f.title}</h3>
-                                    <p className="mt-2 text-sm leading-7 text-slate-500">{f.desc}</p>
-                                </div>
-                            ))}
-                        </div>
                     </div>
-                </section>
 
-                {/* ===== IMAGE BANDS ===== */}
-                <FeatureBand
-                    image={VIDEO_IMG}
-                    title="تعلّم بالفيديو بوضوح"
-                    desc="شاهد الدروس داخل المنصة مباشرة، مع تمارين تفاعلية تظهر بعد كل درس لتعزز الفهم."
-                    points={['تشغيل يوتيوب وفيميو وملفات MP4', 'تمارين اختيار من متعدد مع شرح', 'تتبّع تقدّم الطالب بسهولة']}
-                    ctaHref={user ? route('lessons.index') : route('register')}
-                    ctaLabel={user ? 'تصفّح الدروس' : 'جرّب الآن'}
-                />
-
-                <FeatureBand
-                    reverse
-                    image={BOOKS_IMG}
-                    title="كتب رقمية تفاعلية"
-                    desc="ارفع ملفات PDF ونظّمها في فصول مع أسئلة ومكافآت نجوم بعد كل فصل."
-                    points={['قراءة مريحة داخل المتصفح', 'فصول وأسئلة مرتبطة بالصفحات', 'نجوم تُحفّز إكمال القراءة']}
-                    ctaHref={user ? route('books.index') : route('login')}
-                    ctaLabel="مكتبة الكتب"
-                />
-
-                <FeatureBand
-                    image={LIVE_IMG}
-                    title="حصص مباشرة بالفيديو"
-                    desc="أنشئ غرفة اتصال مرئي وادخل مع طلابك فوراً — بدون تثبيت برامج إضافية."
-                    points={['غرف جاهزة بضغطة زر', 'كاميرا ومايك داخل الصفحة', 'ربط الغرفة بدورة محددة']}
-                    ctaHref={user ? route('video-rooms.index') : route('register')}
-                    ctaLabel="غرف الفيديو"
-                />
-
-                {/* ===== COURSES ===== */}
-                <section className="bg-slate-50 px-5 py-20 sm:px-8">
-                    <div className="mx-auto max-w-6xl">
-                        <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+                    <div className="home-pro-journey-step" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(56, 189, 248, 0.2)' }}>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm">
+                                🧑
+                            </div>
                             <div>
-                                <h2 className="text-2xl font-medium text-slate-800 sm:text-3xl">أحدث الدورات</h2>
-                                <p className="mt-2 text-sm text-slate-500">نماذج مما يُدرَّس على المنصة</p>
+                                <h3 className="text-white font-bold text-sm">الطفل يسأل</h3>
+                                <p className="text-xs text-slate-400">لماذا السماء زرقاء؟</p>
                             </div>
-                            {user && (
-                                <Link href={route('courses.index')} className="text-sm font-medium text-primary hover:underline">
-                                    عرض كل الدورات
-                                </Link>
-                            )}
                         </div>
-
-                        {courses.length === 0 ? (
-                            <div className="rounded-2xl border border-dashed border-slate-200 bg-white py-16 text-center text-sm text-slate-500">
-                                ستظهر الدورات هنا بعد نشرها.
+                        <div className="glass-effect p-3 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold">🧑</div>
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white text-xs font-bold">👧</div>
                             </div>
-                        ) : (
-                            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                                {courses.map((course, i) => (
-                                    <article key={course.id} className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-                                        <div className="relative h-44 overflow-hidden">
-                                            <img
-                                                src={courseCovers[i % courseCovers.length]}
-                                                alt=""
-                                                className="h-full w-full object-cover"
-                                                loading="lazy"
-                                            />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-theme-1/50 to-transparent" />
-                                            {course.level && (
-                                                <span className="absolute bottom-3 right-3 rounded-full bg-white/95 px-3 py-1 text-xs font-medium text-theme-1">
-                                                    {course.level}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="p-5">
-                                            <p className="text-xs text-slate-400">{course.subject || 'مادة عامة'}</p>
-                                            <h3 className="mt-1 text-base font-medium text-slate-800">{course.title}</h3>
-                                            <p className="mt-2 text-sm text-slate-500">
-                                                المعلم: {course.teacher?.name || '—'}
-                                            </p>
-                                        </div>
-                                    </article>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </section>
-
-                {/* ===== STEPS ===== */}
-                <section className="px-5 py-20 sm:px-8">
-                    <div className="mx-auto max-w-6xl">
-                        <div className="mx-auto max-w-2xl text-center">
-                            <h2 className="text-2xl font-medium text-slate-800 sm:text-3xl">كيف تبدأ؟</h2>
-                            <p className="mt-3 text-base text-slate-500">ثلاث خطوات بسيطة للانطلاق</p>
-                        </div>
-                        <div className="mt-12 grid gap-6 md:grid-cols-3">
-                            {[
-                                ['01', 'أنشئ حسابك', 'سجّل كطالب أو معلم خلال دقائق.', 'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z'],
-                                ['02', 'اختر دورتك', 'شاهد الدروس وحل التمارين واقرأ الكتب.', 'M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25'],
-                                ['03', 'تقدّم وتميّز', 'اجمع النجوم واحصل على تقييم معلمك.', 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'],
-                            ].map(([n, title, desc, icon]) => (
-                                <div key={n} className="relative rounded-2xl border border-slate-100 bg-white p-7 text-center shadow-sm">
-                                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-l from-theme-1 to-theme-2 px-3 py-1 text-xs font-medium text-white">
-                                        {n}
-                                    </span>
-                                    <div className="mx-auto mt-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                                        <Icon d={icon} className="h-7 w-7" />
-                                    </div>
-                                    <h3 className="mt-4 text-base font-medium text-slate-800">{title}</h3>
-                                    <p className="mt-2 text-sm leading-7 text-slate-500">{desc}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* ===== CTA ===== */}
-                <section className="relative overflow-hidden px-5 py-16 sm:px-8">
-                    <div className="absolute inset-0 bg-gradient-to-l from-theme-1 to-theme-2" />
-                    <div className="absolute inset-0 bg-texture-white opacity-30" />
-                    <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-                        <div className="text-white">
-                            <h2 className="text-2xl font-medium sm:text-3xl">جاهز تبدأ رحلتك التعليمية؟</h2>
-                            <p className="mt-3 max-w-xl text-base text-white/75">
-                                انضم الآن واستفد من الدروس التفاعلية وغرف الفيديو ونظام النجوم. يمكنك أيضاً تخصيص ألوان الواجهة من زر الإعدادات أسفل الصفحة.
+                            <p className="text-xs text-slate-300 leading-relaxed">
+                                السماء زرقاء بسبب انعكاس ضوء الشمس على جزيئات الهواء. شاهد الفيديو الكامل!
                             </p>
                         </div>
-                        <Link
-                            href={user ? route('dashboard') : route('register')}
-                            className="inline-flex min-h-12 shrink-0 items-center rounded-full bg-white px-7 text-sm font-medium text-theme-1 transition hover:bg-slate-50"
-                        >
-                            {user ? 'إلى لوحة التحكم' : 'إنشاء حساب مجاني'}
-                        </Link>
                     </div>
-                </section>
+                </div>
+            </section>
 
-                {/* ===== FOOTER ===== */}
-                <footer className="bg-gradient-to-b from-theme-1 to-theme-2 text-white">
-                    <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
-                        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
-                            <div>
-                                <div className="flex items-center gap-3">
-                                    <LogoMark className="!h-11 !w-11 border-white/30 [&_>div]:!h-10 [&_>div]:!w-10" />
-                                    <div>
-                                        <p className="font-medium">{name}</p>
-                                        <p className="text-xs text-white/60">منصة تعليم عربية</p>
-                                    </div>
-                                </div>
-                                <p className="mt-4 text-sm leading-7 text-white/70">
-                                    دورات، دروس فيديو، كتب تفاعلية، وغرف اتصال مرئي في مكان واحد.
-                                </p>
-                            </div>
-                            <div>
-                                <h3 className="mb-4 text-sm font-medium">روابط سريعة</h3>
-                                <ul className="space-y-2.5 text-sm text-white/70">
-                                    <li><a href="#features" className="hover:text-white">المزايا</a></li>
-                                    <li><Link href={user ? route('courses.index') : route('login')} className="hover:text-white">الدورات</Link></li>
-                                    <li><Link href={route('login')} className="hover:text-white">تسجيل الدخول</Link></li>
-                                    <li><Link href={route('register')} className="hover:text-white">إنشاء حساب</Link></li>
-                                </ul>
-                            </div>
-                            <div>
-                                <h3 className="mb-4 text-sm font-medium">التعلم</h3>
-                                <ul className="space-y-2.5 text-sm text-white/70">
-                                    <li><Link href={user ? route('lessons.index') : route('login')} className="hover:text-white">الدروس</Link></li>
-                                    <li><Link href={user ? route('books.index') : route('login')} className="hover:text-white">الكتب</Link></li>
-                                    <li><Link href={user ? route('video-rooms.index') : route('login')} className="hover:text-white">غرف الفيديو</Link></li>
-                                    <li><Link href={user ? route('stars.leaderboard') : route('login')} className="hover:text-white">لوحة النجوم</Link></li>
-                                </ul>
-                            </div>
-                            <div>
-                                <h3 className="mb-4 text-sm font-medium">تواصل معنا</h3>
-                                <ul className="space-y-3 text-sm text-white/70">
-                                    <li>support@school.test</li>
-                                    <li dir="ltr" className="text-end">+963 000 000 000</li>
-                                    <li>سوريا · تعليم عن بُعد</li>
-                                </ul>
-                            </div>
+            {/* === CHOOSE YOUR WORLD === */}
+            <section className="home-pro-section cinematic-section cinematic-section-depth-5" data-section="worlds">
+                <div className="home-pro-wrap text-center px-4 sm:px-6 max-w-2xl mx-auto">
+                    <span className="cinematic-kicker inline-flex">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+                        اختر عالمك المفضل
+                    </span>
+                    <h2 className="cinematic-headline mt-3">
+                        اختر عالمك المفضل
+                    </h2>
+                    <p className="cinematic-desc mt-1">
+                        استكشف مواضيع تعليمية غامرة مع شخصياتنا المميزة.
+                    </p>
+                </div>
+
+                {/* World cards */}
+                <div className="home-pro-level-grid">
+                    <a href={route('explore.index')} className="home-pro-level-card group">
+                        <div className="home-pro-level-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 000 20M12 2a14.5 14.5 0 010 20M2 12h20"/></svg>
                         </div>
-                    </div>
-                    <div className="border-t border-white/10">
-                        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-5 py-4 text-xs text-white/55 sm:flex-row sm:px-8">
-                            <p>© {new Date().getFullYear()} {name}. جميع الحقوق محفوظة.</p>
-                            <div className="flex gap-4">
-                                <span>خصوصية</span>
-                                <span>شروط الاستخدام</span>
-                            </div>
+                        <h3 className="font-bold text-white mb-1">الرياضيات</h3>
+                        <p className="text-xs text-slate-400 mb-2">أغانم تعليمية تفاعلية مع شخصياتها المميزة</p>
+                        <span className="home-pro-level-go">
+                            استكشف
+                        </span>
+                    </a>
+
+                    <a href={route('explore.index')} className="home-pro-level-card group">
+                        <div className="home-pro-level-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                         </div>
+                        <h3 className="font-bold text-white mb-1">العلوم</h3>
+                        <p className="text-xs text-slate-400 mb-2">أغانم تعليمية تفاعلية مع شخصياتها المميزة</p>
+                        <span className="home-pro-level-go">
+                            استكشف
+                        </span>
+                    </a>
+
+                    <a href={route('explore.index')} className="home-pro-level-card group">
+                        <div className="home-pro-level-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+                        </div>
+                        <h3 className="font-bold text-white mb-1">اللغة</h3>
+                        <p className="text-xs text-slate-400 mb-2">أغانم تعليمية تفاعلية مع شخصياتها المميزة</p>
+                        <span className="home-pro-level-go">
+                            استكشف
+                        </span>
+                    </a>
+
+                    <a href={route('explore.index')} className="home-pro-level-card group">
+                        <div className="home-pro-level-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        </div>
+                        <h3 className="font-bold text-white mb-1">الإبداع</h3>
+                        <p className="text-xs text-slate-400 mb-2">أغانم تعليمية تفاعلية مع شخصياتها المميزة</p>
+                        <span className="home-pro-level-go">
+                            استكشف
+                        </span>
+                    </a>
+                </div>
+            </section>
+
+            {/* === LEARNING JOURNEY === */}
+            <section className="home-pro-section cinematic-section cinematic-section-depth-6" data-section="journey">
+                <div className="home-pro-wrap text-center px-4 sm:px-6 max-w-2xl mx-auto">
+                    <span className="cinematic-kicker inline-flex">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        مسار التعلم
+                    </span>
+                    <h2 className="cinematic-headline mt-3">
+                        رحلة التعلّم
+                    </h2>
+                    <p className="cinematic-desc mt-1">
+                        اجرب دروسًا تفاعلية واكتشف تقدمك في عالم التعلم.
+                    </p>
+                </div>
+
+                {/* Journey steps */}
+                <div className="home-pro-journey">
+                    <div className="home-pro-journey-step">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg mb-3">
+                            1
+                        </div>
+                        <h4 className="text-white font-bold text-sm mb-1">دورة</h4>
+                        <p className="text-xs text-slate-400">استكشف مواضيع تعليمية متنوعة مع شخصياتها المميزة</p>
                     </div>
-                </footer>
-            </div>
-        </>
+
+                    <div className="home-pro-journey-step">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-lg mb-3">
+                            2
+                        </div>
+                        <h4 className="text-white font-bold text-sm mb-1">تمرين</h4>
+                        <p className="text-xs text-slate-400">أكمل تمارين تفاعلية مع شخصياتها المميزة</p>
+                    </div>
+
+                    <div className="home-pro-journey-step">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-lg mb-3">
+                            3
+                        </div>
+                        <h4 className="text-white font-bold text-sm mb-1">تحدي</h4>
+                        <p className="text-xs text-slate-400">اجرب تحديات تفاعلية مع شخصياتها المميزة</p>
+                    </div>
+
+                    <div className="home-pro-journey-step">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white font-bold text-lg mb-3">
+                            4
+                        </div>
+                        <h4 className="text-white font-bold text-sm mb-1">إنجاز</h4>
+                        <p className="text-xs text-slate-400">احصل على إنجازات تُظهر تقدمك في التعلّم</p>
+                    </div>
+                </div>
+            </section>
+
+            {/* === FOR PARENTS === */}
+            <section className="home-pro-section cinematic-section cinematic-section-depth-7" data-section="parents">
+                <div className="home-pro-wrap text-center px-4 sm:px-6 max-w-2xl mx-auto">
+                    <span className="cinematic-kicker inline-flex">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6m-3-4h-3"/></svg>
+                        لعائلتك
+                    </span>
+                    <h2 className="cinematic-headline mt-3">
+                        عَلّم أطفالك
+                    </h2>
+                    <p className="cinematic-desc mt-1">
+                        تابع التقدم، وأهداف التعلم، وإنجازات أطفالك بشكل مرن.
+                    </p>
+                </div>
+
+                {/* Parent cards */}
+                <div className="home-pro-parents-grid">
+                    <div className="home-pro-parent-card">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm mb-2">📊</div>
+                        <h3 className="font-bold text-white text-sm">تتبع التقدم</h3>
+                        <p className="text-xs text-slate-400">راقب تقدّم طفلك في كل مرحلة تعليمية</p>
+                    </div>
+
+                    <div className="home-pro-parent-card">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm mb-2">🎯</div>
+                        <h3 className="font-bold text-white text-sm">أهداف التعلم</h3>
+                        <p className="text-xs text-slate-400">حدد أهدافًا محددة لتعليم أطفالك</p>
+                    </div>
+
+                    <div className="home-pro-parent-card">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm mb-2">🏆</div>
+                        <h3 className="font-bold text-white text-sm">إنجازات وبرامج</h3>
+                        <p className="text-xs text-slate-400">احصل على إنجازات تُظهر تقدم أطفالك</p>
+                    </div>
+                </div>
+            </section>
+
+            {/* === FINAL CINEMATIC CTA === */}
+            <section className="home-pro-cta-band cinematic-section cinematic-section-depth-8" data-section="final">
+                <div className="home-pro-cta-inner">
+                    <span className="cinematic-kicker inline-flex">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7l5 5-5 5"/></svg>
+                        ابدأ الآن
+                    </span>
+                    <h2 className="cinematic-headline mt-3">
+                        رحلتك تبدأ الآن
+                    </h2>
+                    <p className="cinematic-desc mt-1">
+                        انضم إلى الشخصيات المميزة وابدأ رحلة تعليمية سحرية.
+                    </p>
+                    <div className="home-pro-cta-row">
+                        <a href={route('explore.index')} className="cinematic-btn-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7l5 5-5 5"/></svg>
+                            ابدأ التعلم
+                        </a>
+                        <a href={route('explore.index')} className="cinematic-btn-ghost">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                            استكشف الدورات
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </PublicSiteLayout>
     );
 }

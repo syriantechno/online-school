@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { confirmAction } from '@/Components/ConfirmDialog';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 
@@ -78,7 +79,7 @@ export default function Show({
                                 <button
                                     type="button"
                                     className="rounded-md border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
-                                    onClick={() => confirm('إلغاء التسجيل؟') && router.delete(route('courses.unenroll', course.id))}
+                                    onClick={async () => await confirmAction({ message: 'سيتم إلغاء تسجيلك في هذه الدورة.', variant: 'danger', confirmLabel: 'نعم، ألغِ التسجيل' }) && router.delete(route('courses.unenroll', course.id))}
                                 >
                                     إلغاء التسجيل
                                 </button>

@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { confirmAction } from '@/Components/ConfirmDialog';
 import InteractiveBuilder from '@/Components/InteractiveBuilder';
 import InteractiveQuiz from '@/Components/InteractiveQuiz';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -183,8 +184,8 @@ export default function Show({ book, fileUrl, canManage, userStars }) {
                         <button
                             type="button"
                             className="w-full rounded-xl border border-danger/30 bg-danger/5 px-4 py-2 text-sm text-danger"
-                            onClick={() => {
-                                if (confirm('حذف هذا الفصل؟')) {
+                            onClick={async () => {
+                                if (await confirmAction({ message: 'سيتم حذف الفصل المحدد وكل نشاطاته.', variant: 'danger' })) {
                                     router.delete(route('books.chapters.destroy', [book.id, active.id]), {
                                         preserveScroll: true,
                                     });

@@ -10,6 +10,8 @@ use App\Models\ExamQuestion;
 use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,6 +32,7 @@ class ExamController extends Controller
             })
             ->when($user->isStudent(), function ($q) use ($user) {
                 $q->where('is_published', true)
+                    ->whereHas('course', fn ($c) => $c->where('is_published', true))
                     ->whereHas('course.enrollments', fn ($e) => $e->where('user_id', $user->id));
             })
             ->latest()
@@ -97,6 +100,7 @@ class ExamController extends Controller
 
         if (! $canManage) {
             abort_unless($exam->is_published, 404);
+            abort_unless($exam->course()->where('is_published', true)->exists(), 404);
             abort_unless(
                 Enrollment::query()->where('user_id', $user->id)->where('course_id', $exam->course_id)->exists(),
                 403
@@ -130,13 +134,18 @@ class ExamController extends Controller
         ]);
     }
 
-    public function update(Request $request, Exam $exam): RedirectResponse
+    public function update(Request $request, Exam $exam, NotificationService $notifications): RedirectResponse
     {
         abort_unless($this->canManage($request->user(), $exam), 403);
 
         $data = $this->validatedExam($request);
         $this->assertCourseAccess($request, (int) $data['course_id']);
+        $wasPublished = $exam->is_published;
         $exam->update($data);
+
+        if (! $wasPublished && $exam->is_published) {
+            $this->notifyPublished($exam, $notifications);
+        }
 
         return back()->with('success', 'تم تحديث الفحص.');
     }
@@ -147,6 +156,29 @@ class ExamController extends Controller
         $exam->delete();
 
         return redirect()->route('exams.index')->with('success', 'تم حذف الفحص.');
+    }
+
+    public function duplicate(Request $request, Exam $exam): RedirectResponse
+    {
+        abort_unless($this->canManage($request->user(), $exam), 403);
+
+        $copy = DB::transaction(function () use ($request, $exam) {
+            $copy = $exam->replicate(['is_published', 'available_from', 'available_until']);
+            $copy->title = 'نسخة من '.$exam->title;
+            $copy->created_by = $request->user()->id;
+            $copy->is_published = false;
+            $copy->available_from = null;
+            $copy->available_until = null;
+            $copy->save();
+
+            foreach ($exam->questions as $question) {
+                $copy->questions()->create($question->only(['type', 'prompt', 'options', 'correct_answers', 'points', 'sort_order', 'explanation']));
+            }
+
+            return $copy;
+        });
+
+        return redirect()->route('exams.show', $copy)->with('success', 'تم نسخ الفحص وأسئلته كمسودة جديدة.');
     }
 
     public function storeQuestion(Request $request, Exam $exam): RedirectResponse
@@ -203,7 +235,12 @@ class ExamController extends Controller
     {
         return $request->validate([
             'course_id' => ['required', 'exists:courses,id'],
-            'lesson_id' => ['nullable', 'exists:lessons,id'],
+            'lesson_id' => [
+                'nullable',
+                Rule::exists('lessons', 'id')->where(
+                    fn ($query) => $query->where('course_id', $request->input('course_id'))
+                ),
+            ],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'duration_minutes' => ['nullable', 'integer', 'min:1', 'max:600'],
@@ -233,6 +270,24 @@ class ExamController extends Controller
         abort_unless(
             Course::query()->where('id', $courseId)->where('teacher_id', $request->user()->id)->exists(),
             403
+        );
+    }
+
+    private function notifyPublished(Exam $exam, NotificationService $notifications): void
+    {
+        $students = Enrollment::query()
+            ->with('user')
+            ->where('course_id', $exam->course_id)
+            ->get()
+            ->pluck('user')
+            ->filter();
+
+        $notifications->sendMany(
+            $students,
+            'exam_published',
+            'فحص جديد: '.$exam->title,
+            'تم نشر فحص جديد في دورتك.',
+            route('exams.show', $exam->id)
         );
     }
 }

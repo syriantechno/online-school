@@ -1,0 +1,101 @@
+/* التصميم المتجاوب لصفحة مدرسة اونلاين */
+
+/* الهوامش والحدود للعناصر في الشاشات الصغيرة */
+@media (max-width: 768px) {
+    body {
+        padding: 0 15px;
+    }
+
+    header nav {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .hero h1 {
+        font-size: 2rem;
+    }
+
+    .hero p {
+        font-size: 1.1rem;
+    }
+
+    #courses {
+        padding: 40px 10px;
+    }
+
+    .course-cards {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+
+    .about, .contact {
+        padding: 40px 10px;
+    }
+
+    .contact form {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .contact input, .contact textarea {
+        width: 100%;
+    }
+}
+
+/* الهوامش والحدود للعناصر في الشاشات الصغيرة جداً */
+@media (max-width: 480px) {
+    body {
+        padding: 0 10px;
+    }
+
+    .hero h1 {
+        font-size: 1.8rem;
+    }
+
+    .hero p {
+        font-size: 1rem;
+    }
+
+    #courses {
+        padding: 30px 5px;
+    }
+
+    .course-cards {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .about, .contact {
+        padding: 30px 5px;
+    }
+
+    .contact form {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .contact input, .contact textarea {
+        width: 100%;
+    }
+}
+
+/* التصميم للمستخدمين ذوي القدرة على التفاعل مع الشاشة */
+@media (hover: hover) and (pointer: fine) {
+    .course-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn:hover {
+        background-color: #e0a800;
+    }
+}
+
+/* التصميم للمستخدمين الذين لا يمكنهم التفاعل مع الشاشة */
+@media (hover: none) and (pointer: coarse) {
+    .course-card {
+        transition: none;
+    }
+
+    .btn {
+        transition: none;
+    }
+}

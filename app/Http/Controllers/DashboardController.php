@@ -13,9 +13,13 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): Response
+    public function __invoke(): Response|\Illuminate\Http\RedirectResponse
     {
         $user = auth()->user();
+
+        if ($user->isStudent()) {
+            return redirect()->route('student.profile');
+        }
 
         $stats = match (true) {
             $user->isAdmin() => [

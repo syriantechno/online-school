@@ -90,15 +90,9 @@ class ExamService
                 $this->awardStars($attempt);
             }
 
-            $this->notifications->send(
-                $attempt->user,
-                'exam_result',
-                'نتيجة الفحص: '.$exam->title,
-                $passed
-                    ? "نجحت بنسبة {$percent}%"
-                    : "حصلت على {$percent}% (درجة النجاح {$exam->pass_percent}%)",
-                route('exams.result', [$exam->id, $attempt->id])
-            );
+            if (! $needsManual) {
+                $this->notifyResult($attempt->fresh(['exam', 'user']));
+            }
 
             return $attempt->fresh(['answers.question', 'exam']);
         });
@@ -108,6 +102,7 @@ class ExamService
     {
         return DB::transaction(function () use ($answer, $points, $isCorrect, $feedback) {
             $answer->loadMissing('attempt.exam.questions', 'attempt.user', 'question');
+            $wasGraded = $answer->attempt->status === 'graded';
             $maxPoints = (float) $answer->question->points;
             $points = max(0, min($points, $maxPoints));
 
@@ -139,6 +134,10 @@ class ExamService
                 $this->awardStars($attempt->fresh());
             }
 
+            if (! $stillPending && ! $wasGraded) {
+                $this->notifyResult($attempt->fresh(['exam', 'user']));
+            }
+
             return $attempt->fresh(['answers.question', 'exam', 'user']);
         });
     }
@@ -158,6 +157,19 @@ class ExamService
         }
 
         $this->stars->award($user, $reward, 'exam_pass', $attempt, 'نجاح في فحص: '.$exam->title);
+    }
+
+    private function notifyResult(ExamAttempt $attempt): void
+    {
+        $this->notifications->send(
+            $attempt->user,
+            'exam_result',
+            'نتيجة الفحص: '.$attempt->exam->title,
+            $attempt->passed
+                ? "نجحت بنسبة {$attempt->percent}%"
+                : "حصلت على {$attempt->percent}% (درجة النجاح {$attempt->exam->pass_percent}%)",
+            route('exams.result', [$attempt->exam_id, $attempt->id])
+        );
     }
 
     private function normalizeAnswer(ExamQuestion $question, mixed $raw): array

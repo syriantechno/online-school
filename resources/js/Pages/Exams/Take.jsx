@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PrimaryButton from '@/Components/PrimaryButton';
+import { confirmAction } from '@/Components/ConfirmDialog';
 import { Head, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -60,9 +61,10 @@ export default function Take({ exam, attempt, questions = [], expiresAt = null, 
         form.setData('answers', { ...form.data.answers, [key]: next });
     };
 
-    const submit = (e) => {
+    const submit = async (e) => {
         e.preventDefault();
-        if (!confirm('تسليم الفحص الآن؟')) return;
+        const confirmed = await confirmAction({ title: 'تسليم الفحص؟', message: 'راجع إجاباتك جيداً، بعد التسليم لن تتمكن من تعديلها.', confirmLabel: 'نعم، سلّم الفحص' });
+        if (!confirmed) return;
         form.post(route('exams.submit', [exam.id, attempt.id]));
     };
 

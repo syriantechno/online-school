@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { confirmAction } from '@/Components/ConfirmDialog';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, Link, router, useForm } from '@inertiajs/react';
@@ -266,7 +267,7 @@ export default function Show({
                                         <button
                                             type="button"
                                             className="text-sm text-danger"
-                                            onClick={() => confirm('حذف السؤال؟') && router.delete(route('exams.questions.destroy', [exam.id, q.id]))}
+                                            onClick={async () => await confirmAction({ message: 'سيتم حذف هذا السؤال من الفحص.', variant: 'danger' }) && router.delete(route('exams.questions.destroy', [exam.id, q.id]))}
                                         >
                                             حذف
                                         </button>
