@@ -1,81 +1,52 @@
 import { Head } from '@inertiajs/react';
 import PublicSiteLayout from '@/Components/PublicSiteLayout';
 import { useStudentTheme } from '@/contexts/StudentThemeContext';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 
-const worldAssets = {
+const A = {
     boyHero: '/assets/home/characters/boy-hero.png',
     girlHero: '/assets/home/characters/girl-hero.png',
-    boy1: '/Boy1.png',
-    girl1: '/Girl.png',
-    boySchool: '/assets/home/characters/boy-schoolbag.png',
-    girlSchool: '/assets/home/characters/girl-schoolbag.png',
+    boySmall: '/assets/home/characters/hero-color-boy.png',
+    girlSmall: '/assets/home/characters/hero-color-girl.png',
     book: '/assets/home/characters/book.png',
-    ipad: '/assets/home/characters/ipad.png',
-    lamp: '/assets/home/characters/lamp.png',
-    think: '/assets/home/characters/think.png',
-    heroBoy: '/assets/home/characters/hero-color-boy.png',
-    heroGirl: '/assets/home/characters/hero-color-girl.png',
+    game: '/assets/home/characters/game.png',
+    trophy: '/assets/home/characters/ka2s.png',
+    target: '/assets/home/characters/hadaf.png',
 };
 
-const worlds = [
-    { key: 'letters', title: 'الحروف', subtitle: 'تعلّم الحروف العربية وأصواتها', color: 'from-rose-400 to-pink-500', accent: '#fb7185' },
-    { key: 'words', title: 'الكلمات', subtitle: 'اقرأ كلمات جديدة يوميًا', color: 'from-sky-400 to-indigo-500', accent: '#38bdf8' },
-    { key: 'songs', title: 'الأغاني', subtitle: 'أغاني تفاعلية للتعلم بالإنشاء', color: 'from-amber-400 to-orange-500', accent: '#fbbf24' },
-    { key: 'games', title: 'الألعاب', subtitle: 'تعلّم من خلال اللعب والاستمتاع', color: 'from-emerald-400 to-teal-500', accent: '#34d399' },
+const WORLDS = [
+    { id: 'letters', title: 'الحروف', tag: 'أ، ب، ت', color: '#fb7185', soft: '#ffe4e6', icon: 'letters' },
+    { id: 'words', title: 'الكلمات', tag: 'اقرأ كلمات', color: '#38bdf8', soft: '#e0f2fe', icon: 'words' },
+    { id: 'songs', title: 'الأغاني', tag: 'تعلّم بالغناء', color: '#fbbf24', soft: '#fef3c7', icon: 'songs' },
+    { id: 'games', title: 'الألعاب', tag: 'العب وتعلّم', color: '#34d399', soft: '#d1fae5', icon: 'games' },
 ];
 
-const journeySteps = [
-    { step: 1, title: 'استكشف العالم', desc: 'اختر عالمًا مفضلًا وابدأ المغامرة', color: '#fb7185' },
-    { step: 2, title: 'تعلّم مع الشخصيات', desc: 'الشخصيات المرشدة تصاحبك في كل درس', color: '#38bdf8' },
-    { step: 3, title: 'مارس وتمرّن', desc: 'تمارين تفاعلية ممتعة وتحديات', color: '#fbbf24' },
-    { step: 4, title: 'احصل على إنجازات', desc: 'اجمع النجوم والشارات وافتخر', color: '#34d399' },
-];
-
-const parentFeatures = [
-    { icon: '📊', title: 'تتبع التقدم', desc: 'لوحة معلومات واضحة عن مستوى طفلك وإنجازاته.' },
-    { icon: '🎯', title: 'أهداف تعلّم مخصصة', desc: 'حدّد أهدافًا مناسبة لمستوى وعمر طفلك.' },
-    { icon: '⏱️', title: 'دروس قصيرة مركّزة', desc: 'محتوى قصير وفعّال يناسب انتباه الأطفال.' },
-];
-
-const stats = [
-    { value: '+10K', label: 'طالب وطالبة' },
-    { value: '+500', label: 'درس تفاعلي' },
-    { value: '4.9★', label: 'تقييم الأهل' },
-    { value: '12', label: 'عالم تعلّم' },
+const JOURNEY = [
+    { step: 1, title: 'استكشف', desc: 'كُن فضولياً في العالم' },
+    { step: 2, title: 'تعلّم', desc: 'خُطوات صغيرة كل يوم' },
+    { step: 3, title: 'مارس', desc: 'دُرّب ولوّن وأعِد' },
+    { step: 4, title: 'أَنجز', desc: 'اجمع نجومك بفخر' },
 ];
 
 export default function Welcome({ content = {}, courses = [], stats: liveStats = [] }) {
     const { isPublicHome } = useStudentTheme();
     const startRoute = isPublicHome ? route('explore.index') : route('learning.my');
-    const heroRef = useRef(null);
-    const [scrollY, setScrollY] = useState(0);
-    const [revealed, setRevealed] = useState({});
 
     useEffect(() => {
-        const handleScroll = () => setScrollY(window.scrollY);
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
-    useEffect(() => {
-        const sections = document.querySelectorAll('.world-section');
+        const targets = document.querySelectorAll('.rise-on-scroll');
         const observer = new IntersectionObserver(
-            (entries) => {
+            (entries) =>
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
-                        setRevealed((prev) => ({ ...prev, [entry.target.dataset.reveal || '']: true }));
+                        entry.target.classList.add('is-revealed');
                         observer.unobserve(entry.target);
                     }
-                });
-            },
-            { threshold: 0.15, rootMargin: '0px 0px -60px 0px' }
+                }),
+            { threshold: 0.12, rootMargin: '0px 0px -60px 0px' }
         );
-        sections.forEach((sec) => observer.observe(sec));
+        targets.forEach((t) => observer.observe(t));
         return () => observer.disconnect();
     }, []);
-
-    const reveal = (cond) => (key) => cond ? 'world-reveal is-visible' : `world-reveal ${key}`;
 
     return (
         <PublicSiteLayout fullBleed overlayHero>
@@ -83,449 +54,474 @@ export default function Welcome({ content = {}, courses = [], stats: liveStats =
             <meta name="description" content={content.hero_description || 'عربيتي — منصة تعليم للأطفال والأهل.'} />
 
             <style>{`
-                @keyframes float-y {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-16px); }
+                /* ---------- world base ---------- */
+                .world-page{position:relative;overflow:hidden;background:linear-gradient(180deg,#bfe6ff 0%,#dff4ff 22%,#fdf6d8 45%,#fff2ec 70%,#ffe9f2 100%);}
+                .scene{position:relative;overflow:hidden;}
+                .scene-inner{position:relative;z-index:5;margin:0 auto;max-width:1200px;padding:0 1.25rem;}
+
+                /* ---------- motion ---------- */
+                @keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+                @keyframes floatSoft{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+                @keyframes drift{0%,100%{transform:translateX(0)}50%{transform:translateX(26px)}}
+                @keyframes twinkle{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
+                @keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+                @keyframes riseIn{0%{opacity:0;transform:translateY(34px)}100%{opacity:1;transform:translateY(0)}}
+                @keyframes popIn{0%{opacity:0;transform:scale(.6)}70%{transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+                .anim-float{animation:floatY 5.5s ease-in-out infinite;}
+                .anim-float-soft{animation:floatSoft 4.5s ease-in-out infinite;}
+                .anim-drift{animation:drift 9s ease-in-out infinite alternate;}
+                .anim-sway{animation:sway 4s ease-in-out infinite;transform-origin:center bottom;}
+                .twinkle{animation:twinkle 2.6s ease-in-out infinite;}
+                .rise-on-scroll{opacity:0;transform:translateY(36px);transition:opacity .9s ease,transform .9s ease;}
+                .is-revealed{opacity:1;transform:none;}
+
+                /* ---------- sky elements ---------- */
+                .sun{position:absolute;right:8%;top:9%;width:110px;height:110px;border-radius:999px;background:radial-gradient(circle,#fff3b0 0%,#ffd75e 55%,#ffb347 100%);box-shadow:0 0 90px 40px rgba(255,214,92,.65);}
+                .cloud{position:absolute;background:#fff;border-radius:999px;box-shadow:inset 0 -10px 0 rgba(150,200,230,.35);}
+                .cloud::before,.cloud::after{content:'';position:absolute;background:#fff;border-radius:999px;}
+                .cloud::before{width:55%;height:160%;top:-55%;left:12%;}
+                .cloud::after{width:38%;height:120%;top:-30%;right:14%;}
+
+                /* ---------- land ---------- */
+                .hill{position:absolute;border-radius:50%;}
+                .hill-far{background:#c9e9b8;filter:blur(2px);}
+                .hill-mid{background:#a8d97e;}
+                .hill-near{background:#8fce60;}
+
+                /* ---------- typography helpers ---------- */
+                .font-display{font-weight:900;letter-spacing:-.5px;line-height:1.15;}
+                .ink{color:#3d2c57;}
+
+                /* ---------- buttons (part of world) ---------- */
+                .btn-world{display:inline-flex;align-items:center;gap:.6rem;border-radius:999px;padding:.85rem 1.9rem;font-weight:800;color:#fff;box-shadow:0 10px 0 rgba(0,0,0,.12),0 18px 30px -12px rgba(61,44,87,.55);transition:transform .18s ease,box-shadow .18s ease;border:3px solid rgba(255,255,255,.65);}
+                .btn-world:hover{transform:translateY(-3px);box-shadow:0 13px 0 rgba(0,0,0,.12),0 24px 36px -12px rgba(61,44,87,.55);}
+                .btn-world:active{transform:translateY(4px);box-shadow:0 4px 0 rgba(0,0,0,.12);}
+                .btn-candy{background:linear-gradient(180deg,#fb7185,#f43f5e);}
+                .btn-sky{background:linear-gradient(180deg,#38bdf8,#0284c7);}
+
+                /* ---------- world map ---------- */
+                .road{fill:none;stroke:#f6b26b;stroke-width:34;stroke-linecap:round;stroke-linejoin:round;}
+                .road-edge{fill:none;stroke:#8b5a2b;stroke-width:42;stroke-linecap:round;stroke-linejoin:round;opacity:.5;}
+                .world-stop{position:relative;cursor:pointer;transition:transform .2s ease;}
+                .world-stop:hover{transform:translateY(-6px) rotate(-1deg);}
+                .stop-plate{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:2.4rem;padding:1.6rem 1.9rem 1.4rem;box-shadow:0 18px 34px -14px rgba(61,44,87,.5),inset 0 2px 0 rgba(255,255,255,.7);border:4px solid rgba(255,255,255,.8);}
+
+                /* ---------- journey ---------- */
+                .trail{fill:none;stroke:#d8b56a;stroke-width:26;stroke-linecap:round;stroke-linejoin:round;}
+                .trail-dot{fill:#f7f7ef;stroke:#d8b56a;stroke-width:5;}
+
+                /* ---------- treasure ---------- */
+                .star-shape{filter:drop-shadow(0 4px 0 rgba(61,44,87,.18));}
+
+                /* ---------- observatory ---------- */
+                .scope{position:relative;background:linear-gradient(180deg,#fff,#fdf2d8);border-radius:2rem;box-shadow:0 24px 44px -20px rgba(61,44,87,.45),inset 0 3px 0 rgba(255,255,255,.9);border:4px solid #fff;}
+                .grow-track{position:relative;height:26px;border-radius:999px;background:#eef0ea;box-shadow:inset 0 3px 6px rgba(61,44,87,.12);overflow:hidden;}
+                .grow-fill{position:absolute;top:0;bottom:0;right:0;border-radius:999px;background:linear-gradient(90deg,#ffd75e,#34d399);}
+
+                /* ---------- responsive ---------- */
+                @media (max-width:768px){
+                    .scene-inner{padding:0 .9rem;}
+                    .sun{width:70px;height:70px;top:4%;}
                 }
-                @keyframes float-y-slow {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-9px); }
+                @media (prefers-reduced-motion:reduce){
+                    *{animation:none !important;transition:none !important;}
                 }
-                @keyframes drift {
-                    0%, 100% { transform: translate(0, 0) scale(1); opacity: .55; }
-                    25% { transform: translate(24px, -20px) scale(1.08); opacity: .8; }
-                    75% { transform: translate(-24px, -16px) scale(.92); opacity: .7; }
-                }
-                @keyframes spin-slow {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-                @keyframes rise {
-                    0% { transform: translateY(24px) scale(.96); opacity: 0; }
-                    100% { transform: translateY(0) scale(1); opacity: 1; }
-                }
-                @keyframes shimmer-bar {
-                    0% { left: -60%; }
-                    100% { left: 120%; }
-                }
-                @keyframes pop-in {
-                    0% { transform: scale(.85); opacity: 0; }
-                    100% { transform: scale(1); opacity: 1; }
-                }
-                @keyframes hero-float {
-                    0%, 100% { transform: translateY(0) rotate(0deg); }
-                    50% { transform: translateY(-8px) rotate(.3deg); }
-                }
-                @keyframes cloud-drift-1 {
-                    0%, 100% { transform: translateX(0); opacity: .7; }
-                    25% { transform: translateX(-40px); opacity: .85; }
-                    50% { transform: translateX(-30px); opacity: .6; }
-                    75% { transform: translateX(10px); opacity: .9; }
-                }
-                @keyframes cloud-drift-2 {
-                    0%, 100% { transform: translateX(0); opacity: .45; }
-                    33% { transform: translateX(-35px); opacity: .6; }
-                    66% { transform: translateX(25px); opacity: .35; }
-                }
-                @keyframes cloud-drift-3 {
-                    0%, 100% { transform: translateX(0); opacity: .4; }
-                    50% { transform: translateX(-28px); opacity: .6; }
-                }
-                @keyframes star-pulse {
-                    0%, 100% { transform: scale(.9) rotate(0deg); opacity: .7; }
-                    50% { transform: scale(1.15) rotate(180deg); opacity: 1; }
-                }
-                @keyframes glow-pulse {
-                    0%, 100% { filter: brightness(1); }
-                    50% { filter: brightness(1.2); }
-                }
-                .world-section { position: relative; overflow: hidden; }
-                .world-reveal {
-                    opacity: 0;
-                    transform: translateY(34px) scale(.98);
-                    filter: blur(6px);
-                    transition: opacity .8s cubic-bezier(.2,.8,.2,1), transform .8s cubic-bezier(.2,.8,.2,1), filter .8s cubic-bezier(.2,.8,.2,1);
-                }
-                .world-reveal.is-visible {
-                    opacity: 1;
-                    transform: none;
-                    filter: blur(0);
-                }
-                .hero-sky { background: linear-gradient(160deg, #eaf6ff 0%, #f4f0ff 45%, #fff7ef 82%, #ffe3ec 100%); background-attachment: fixed; }
-                .cloud { position: absolute; border-radius: 50%; pointer-events: none; will-change: transform, opacity; }
-                .rainbow-arch { position: absolute; border-radius: 50%; mix-blend-mode: screen; pointer-events: none; z-index: 1; }
-                .word-card { position: relative; overflow: hidden; isolation: isolate; }
-                .word-card::after {
-                    content: '';
-                    position: absolute; top: 0; bottom: 0; width: 34%; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.6), rgba(255,255,255,0));
-                    transform: translateX(-100%); animation: shimmer-bar 4.8s ease-in-out infinite; pointer-events: none; z-index: 1;
-                }
-                .world-tile { position: relative; transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s; cursor: pointer; }
-                .world-tile:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 24px 48px -18px rgba(30,60,120,.3), 0 0 0 1px rgba(30,60,120,.15); }
-                .world-tile > svg, .world-tile > img { position: relative; z-index: 1; transition: transform .4s cubic-bezier(.2,.8,.2,1), filter .4s ease; }
-                .stat-pill { position: relative; overflow: hidden; cursor: default; }
-                .stat-pill::after { content: ''; position: absolute; top: 0; bottom: 0; left: -50%; width: 40%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); animation: shimmer-bar 3.8s ease-in-out infinite; }
-                .journey-node { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s; cursor: pointer; position: relative; overflow: hidden; }
-                .journey-node:hover { transform: translateY(-6px) scale(1.04); box-shadow: 0 22px 44px -20px rgba(30,60,120,.4), 0 8px 16px rgba(30,60,120,.15); }
-                .journey-node::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to right, transparent, rgba(255,255,255,.4), transparent); opacity: 0; transition: opacity .3s; pointer-events: none; }
-                .journey-node:hover::after { opacity: 1; }
-                .parent-tile { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s, border-color .35s; cursor: default; position: relative; overflow: hidden; }
-                .parent-tile:hover { transform: translateY(-4px); border-color: var(--tile-accent, #c7d2fe); box-shadow: 0 18px 36px -16px rgba(30,60,120,.25), inset 0 1px 0 rgba(255,255,255,.4); }
-                .cta-orb { position: absolute; border-radius: 50%; filter: blur(48px); pointer-events: none; z-index: -1; }
-                @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0s !important; transition-duration: 0.01ms !important; transform: none !important; filter: none !important; opacity: .55 !important; } }
-                @media (max-width: 768px) { .hero-sky { background-attachment: scroll; min-height: auto; height: 92vh; } .cloud { display: none; } }
             `}</style>
 
-            {/* ===================== HERO SCENE ===================== */}
-            <section ref={heroRef} className="hero-sky world-section" data-reveal="hero" style={{ minHeight: '100vh', overflow: 'hidden' }}>
-                {/* Background layers */}
-                <div className="absolute inset-0 pointer-events-none z-0">
-                    <div className="cloud cloud-1" style={{ width: 280, height: 135, top: '6%', left: '4%', opacity: .9 }} />
-                    <div className="cloud cloud-2" style={{ width: 210, height: 105, top: '14%', right: '8%', opacity: .75, animationDuration: '.3s' }} />
-                    <div className="cloud cloud-3" style={{ width: 160, height: 90, top: '28%', left: '-2%', opacity: .6 }} />
-                    <div className="cloud cloud-4" style={{ width: 150, height: 75, top: '38%', right: '-3%', opacity: .5 }} />
-                    <div className="cloud cloud-5" style={{ width: 200, height: 95, top: '62%', left: '14%' }} />
-                </div>
+            <div className="world-page">
 
-                {/* Rainbow arch behind characters */}
-                <div className="rainbow-arch absolute pointer-events-none z-[1]" style={{ width: 780, height: 780, top: '-35%', right: '-25%' }} />
+                {/* ============================================================
+                    SCENE 1 — HERO: giant illustrated environment
+                ============================================================ */}
+                <section className="scene" data-reveal="hero" style={{ minHeight:'100vh', paddingTop:'84px' }}>
+                    {/* sun + clouds + stars (background) */}
+                    <div className="sun anim-drift" aria-hidden="true" />
+                    <div className="cloud anim-drift" style={{ width:'210px', height:'56px', top:'12%', left:'6%' }} aria-hidden="true" />
+                    <div className="cloud" style={{ width:'150px', height:'42px', top:'20%', left:'24%' }} aria-hidden="true" />
+                    <div className="cloud anim-float-soft" style={{ width:'260px', height:'66px', top:'8%', right:'-2%' }} aria-hidden="true" />
 
-                {/* Hero content column */}
-                <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-4 sm:px-5 lg:flex-row lg:items-center lg:text-left">
-                    <div className="flex-1 lg:pr-8" style={{ animation: 'rise 1.2s cubic-bezier(.2,.8,.2,1) both' }}>
-                        {/* Badge */}
-                        <span className="word-card inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/65 px-4 py-1.5 text-sm font-semibold text-indigo-600 shadow-lg backdrop-blur-md">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3z" /></svg>
-                            منصة عربية تعليمية للأطفال
-                        </span>
+                    {/* stars */}
+                    {[
+                        [8, 26], [16, 34], [70, 18], [82, 30], [55, 12],
+                    ].map(([l, t], i) => (
+                        <svg key={i} className="twinkle" style={{ position:'absolute', left:`${l}%`, top:`${t}%`, animationDelay:`${i * .4}s` }} width="20" height="20" viewBox="0 0 24 24" fill="#ffd75e">
+                            <path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3z" />
+                        </svg>
+                    ))}
 
-                        <h1 className="mt-7 text-4xl sm:text-5xl lg:text-[clamp(2rem,5vw,3.6rem)] font-black leading-tight text-slate-800 sm:leading-none">
-                            عالمٌ صغير<br />
-                            <span className="bg-gradient-to-r from-rose-500 via-fuchsia-500 to-sky-400 -webkit-background-clip bg-clip-text text-transparent">للتعلّم والاستمتاع</span>
-                        </h1>
+                    {/* far hills */}
+                    <div className="hill hill-far" style={{ bottom:'-46vh', right:'-12vw', width:'60vw', height:'60vh' }} />
+                    <div className="hill hill-far" style={{ bottom:'-50vh', left:'-14vw', width:'70vw', height:'60vh' }} />
 
-                        <p className="mx-auto mt-6 max-w-xl text-lg leading-[1.8] text-slate-500">
-                            عربيتي تأخذ طفلك في رحلة تعلّم غامرة مع شخصيات مرشدة ممتعة، دروس قصيرة، وتحديات تفاعلية تقربه من الحروف والكلمات والأغاني.
-                        </p>
+                    {/* mid hills */}
+                    <div className="hill hill-mid" style={{ bottom:'-30vh', left:'-10vw', width:'80vw', height:'46vh' }} />
+                    <div className="hill hill-mid" style={{ bottom:'-34vh', right:'-12vw', width:'74vw', height:'48vh' }} />
 
-                        {/* CTA pills */}
-                        <div className="mx-auto mt-10 flex flex-wrap items-center justify-center lg:justify-start gap-3">
-                            <a href={startRoute} className="word-card inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-rose-500 via-fuchsia-600 to-sky-400 px-7 py-3.5 font-bold text-white shadow-xl shadow-fuchsia-500/25 transition hover:-translate-y-[1px] hover:shadow-2xl">
-                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7l5 5-5 5" /></svg>
-                                ابدأ المغامرة
-                            </a>
-                            <a href={route('explore.index')} className="inline-flex items-center gap-2 rounded-full border-2 border-indigo-300 bg-white/80 px-7 py-3.5 font-bold text-indigo-600 transition hover:-translate-y-[1px] hover:border-indigo-400 hover:shadow-lg">
-                                استكشف الدورات
-                            </a>
-                        </div>
+                    {/* near ground */}
+                    <div className="hill hill-near" style={{ bottom:'-22vh', left:'-8vw', width:'110vw', height:'34vh' }} />
 
-                        {/* Stat pills */}
-                        <div className="mx-auto mt-12 flex flex-wrap justify-center lg:justify-start lg:max-w-md">
-                            <div className="flex flex-wrap gap-3">
-                                {stats.map((s) => (
-                                    <div key={s.label} className="stat-pill flex items-center gap-2 rounded-full bg-white/80 px-4 py-1.5 shadow-sm border border-white/60 backdrop-blur-md">
-                                        <span className="text-xl font-black text-indigo-700">{s.value}</span>
-                                        <span className="text-xs font-medium text-slate-500">{s.label}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+                    {/* FG grass tufts */}
+                    <div className="hill" style={{ bottom:'-6vh', left:'-4vw', width:'108vw', height:'16vh', background:'#7cbf4d', borderRadius:'50% 50% 0 0' }} aria-hidden="true" />
 
-                    {/* Hero characters scene */}
-                    <div className="relative mt-12 flex-1 lg:mt-0">
-                        <div className="relative mx-auto flex max-w-md items-center justify-center lg:max-w-none">
-                            {/* Ground / scene base */}
-                            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 translate-y-6" style={{ width: 500, height: 130, borderRadius: '50%', background: 'radial-gradient(ellipse at center, rgba(139,92,246,.18), rgba(139,92,246,0) 70%)', filter: 'blur(28px)' }} />
-                            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 translate-y-5" style={{ width: 360, height: 90, borderRadius: '50%', background: 'radial-gradient(circle at center, rgba(251,113,133,.08), transparent 70%)' }} />
-                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 translate-y-[6px]" style={{ width: 440, height: 95, borderRadius: '50%', background: 'radial-gradient(circle at center, rgba(56,189,248,.07), transparent 70%)' }} />
-
-                            {/* Boy character (foreground) */}
-                            <div className="relative z-20" style={{ transform: `translateY(${Math.sin(scrollY * 0.025) * 10}px)` }}>
-                                <div className="float-anim relative" style={{ animation: 'hero-float 6s ease-in-out infinite' }}>
-                                    <img src={worldAssets.boyHero} alt="شخصية الطفل المرشدة" style={{ width: 300, height: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 28px 40px rgba(60,40,120,.3))' }} />
-                                </div>
-                            </div>
-
-                            {/* Girl character (offset behind) */}
-                            <div className="relative z-10 -ml-[5%] lg:-ml-[8%]" style={{ transform: `translateY(${Math.sin(scrollY * 0.02 + 1) * 7}px)` }}>
-                                <div style={{ animation: 'hero-float-slow 6s ease-in-out infinite .3s' }}>
-                                    <img src={worldAssets.girlHero} alt="شخصية الطفلة المرشدة" style={{ width: 250, height: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 18px 26px rgba(60,40,120,.3))' }} />
-                                </div>
-                            </div>
-
-                            {/* Floating decorative elements */}
-                            <div className="relative z-30" style={{ top: '7%', left: '-5%' }}>
-                                <img src={worldAssets.book} alt="" style={{ width: 68, height: 'auto', objectFit: 'contain' }} />
-                            </div>
-                            <div className="relative z-30" style={{ top: '14%', right: '-7%' }}>
-                                <img src={worldAssets.ipad} alt="" style={{ width: 82, height: 'auto', objectFit: 'contain' }} />
-                            </div>
-                            <div className="relative z-30" style={{ bottom: '16%', left: '-4%' }}>
-                                <img src={worldAssets.lamp} alt="" style={{ width: 58, height: 'auto', objectFit: 'contain' }} />
-                            </div>
-                            <div className="relative z-30" style={{ bottom: '12%', right: '-6%' }}>
-                                <img src={worldAssets.think} alt="" style={{ width: 58, height: 'auto', objectFit: 'contain' }} />
-                            </div>
-                            <div className="relative z-30" style={{ top: '14%', left: '-2%' }}>
-                                <img src={worldAssets.boySchool} alt="" style={{ width: 58, height: 'auto', objectFit: 'contain' }} />
-                            </div>
-                            <div className="relative z-30" style={{ top: '14%', right: '-2%' }}>
-                                <img src={worldAssets.girlSchool} alt="" style={{ width: 58, height: 'auto', objectFit: 'contain' }} />
-                            </div>
-
-                            {/* Sparkle stars */}
-                            {[
-                                { t: '4%', r: '10%' }, { t: '26%', l: '-3%' }, { t: '58%', r: '-1%' },
-                                { t: '78%', l: '3%' }, { t: '92%', r: '-4%' }, { t: '10%', r: '2%' },
-                            ].map((p, i) => (
-                                <div key={i} className="absolute" style={{ top: p.t, left: p.l }}>
-                                    <svg width="36" height="36" viewBox="0 0 24 24" fill={['#fbbf24', '#fb7185', '#34d399'][i % 3]}><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3z" /></svg>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Scroll hint */}
-                <div className="absolute bottom-8 left-1/2 z-20 -translate-x-1/2 flex flex-col items-center gap-[3px] opacity-55">
-                    <span className="text-xs font-medium text-slate-400 tracking-wide">اسحب للتمرير</span>
-                    <div className="relative h-[18px] w-[7px] rounded-full border-2 border-indigo-300">
-                        <div className="absolute left-1/2 top-1.5 h-[6px] w-[4px] -translate-x-1/2 rounded-full bg-indigo-400" style={{ animation: 'float-y 2s ease-in-out infinite' }} />
-                    </div>
-                </div>
-            </section>
-
-            {/* ===================== LEARNING WORLDS ===================== */}
-            <section className="world-section bg-gradient-to-b from-white/60 to-indigo-50/40 py-20 sm:py-28" data-reveal="worlds">
-                <div className="mx-auto max-w-6xl px-5">
-                    {/* Section header */}
-                    <div className={reveal(true)('hero')} style={{ transitionDelay: '0ms' }}>
-                        <div className="mx-auto flex max-w-md flex-col items-center text-center">
-                            <span className="word-card inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" /></svg>
-                                عوالم تعلّم غامرة
+                    {/* ===== content (part of the scene) ===== */}
+                    <div className="scene-inner flex flex-col items-center gap-10 pb-[46vh] pt-10 text-center lg:flex-row lg:items-end lg:justify-between lg:gap-6 lg:pb-[44vh] lg:text-right">
+                        <div className="rise-on-scroll" style={{ maxWidth:'560px' }}>
+                            <span className="anim-float-soft inline-flex items-center gap-2 rounded-full border-2 border-white bg-white/80 px-4 py-1.5 text-sm font-bold text-rose-500 shadow">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3z" /></svg>
+                                منصة عربية تعليمية للأطفال
                             </span>
-                            <h2 className="mt-5 text-3xl font-black text-slate-800 sm:text-4xl">استكشف العوالم</h2>
-                            <p className="mt-4 max-w-lg text-base leading-[1.7] text-slate-600">كل عالم مليء بالشخصيات والدروس التفاعلية التي تجعل التعلّم مغامرة يومية.</p>
-                        </div>
-                    </div>
-
-                    {/* World islands grid */}
-                    <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                        {worlds.map((w, i) => (
-                            <div key={w.key} className={reveal(true)('word-card')} style={{ transitionDelay: `${(i + 1) * 90}ms` }}>
-                                <a href={route('explore.index')} className="world-tile block overflow-hidden rounded-3xl bg-white p-6 shadow-xl border border-slate-100">
-                                    {/* World illustration area */}
-                                    <div className="relative rounded-2xl bg-gradient-to-br from-slate-50 to-white p-4 text-center mb-5" style={{ height: 230 }}>
-                                        <div className={`mx-auto flex h-[108px] w-[108px] items-center justify-center rounded-full bg-gradient-to-br ${w.color} text-white shadow-lg`} style={{ filter: 'drop-shadow(0 6px 14px rgba(0,0,0,.2))' }}>
-                                            {w.icon}
-                                        </div>
-                                    </div>
-                                    <h3 className="mt-5 text-xl font-black text-slate-800">{w.title}</h3>
-                                    <p className="mt-1.5 text-sm leading-[1.6] text-slate-500">{w.subtitle}</p>
-                                    <span className="mt-4 inline-flex items-center gap-1.5 font-bold text-indigo-600 group-hover:text-fuchsia-600 transition-colors duration-300">
-                                        استكشف
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5m14 0-7 7 7 7" /></svg>
-                                    </span>
+                            <h1 className="font-display ink mt-4 text-5xl sm:text-6xl lg:text-7xl" style={{ textShadow:'0 6px 0 rgba(255,255,255,.8)' }}>
+                                عالم صغير
+                                <span className="block text-rose-500" style={{ WebkitTextStroke:'2px #fff' }}>وكلّه للتعلّم</span>
+                            </h1>
+                            <p className="mt-5 max-w-md text-lg font-semibold leading-relaxed text-[#5b4876]">
+                                عربيتي تأخذ طفلك في مغامرة حروف وكلمات وأغاني وألعاب، مع شخصيات تحبّها.
+                            </p>
+                            <div className="mt-7 flex flex-wrap items-center justify-center gap-4 lg:justify-start">
+                                <a href={startRoute} className="btn-world btn-candy">
+                                    ابدأ المغامرة
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14m-7-7l7 7-7 7" /></svg>
+                                </a>
+                                <a href={route('explore.index')} className="btn-world btn-sky">
+                                    استكشف العوالم
                                 </a>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
+                        </div>
 
-            {/* ===================== CHARACTER COMPANIONS ===================== */}
-            <section className="world-section relative overflow-hidden bg-gradient-to-b from-sky-50/60 to-white py-20 sm:py-28" data-reveal="companions">
-                <div className="mx-auto max-w-6xl px-5">
-                    <div className="grid items-center gap-12 lg:grid-cols-2">
-                        {/* Scene */}
-                        <div className="relative flex items-center justify-center lg:order-2" style={{ animation: 'rise 1.2s cubic-bezier(.2,.8,.2,1) both' }}>
-                            <div className="relative w-full max-w-md">
-                                {/* Background glow */}
-                                <div className="absolute inset-0 mx-auto mt-10 h-[340px] w-[340px] rounded-full bg-gradient-to-br from-sky-200/65 to-fuchsia-200/65 blur-2xl" />
-                                {/* Boy companion */}
-                                <div className="relative z-10 flex justify-center">
-                                    <div style={{ animation: 'float-y 4.8s ease-in-out infinite' }}>
-                                        <img src={worldAssets.heroBoy} alt="الطفل كشخصية مرشدة" style={{ width: '76%', height: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 14px 28px rgba(60,40,120,.3))' }} />
-                                    </div>
+                        {/* characters physically in the scene */}
+                        <div className="relative flex items-end justify-center gap-2 lg:w-[42%]">
+                            <img
+                                src={A.boyHero}
+                                alt="الصبي رامز مرشدك في عربيتي"
+                                className="anim-float relative z-10"
+                                style={{ width:'min(46vw,290px)', height:'auto', objectFit:'contain', filter:'drop-shadow(0 26px 18px rgba(61,44,87,.35))' }}
+                            />
+                            <img
+                                src={A.girlHero}
+                                alt="الفتاة سيلينا رفيقة التعلم"
+                                className="anim-float-soft relative z-20 -mr-8"
+                                style={{ width:'min(46vw,280px)', height:'auto', objectFit:'contain', filter:'drop-shadow(0 26px 18px rgba(61,44,87,.35))' }}
+                            />
+                            {/* a floating open book between them */}
+                            <img
+                                src={A.book}
+                                alt="كتاب القصص المفتوح"
+                                className="anim-float absolute left-1/2 top-[6%] z-30 -translate-x-1/2"
+                                style={{ width:'86px', transform:'translateX(-50%) rotate(-6deg)', animationDelay:'.9s' }}
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                {/* curved transition */}
+                <svg viewBox="0 0 1440 120" preserveAspectRatio="none" style={{ position:'relative', zIndex:6, display:'block', marginTop:'-1px' }} aria-hidden="true">
+                    <path fill="#fff8e7" d="M0,80 C320,10 720,120 1440,30 L1440,120 L0,120 Z" />
+                </svg>
+
+                {/* ============================================================
+                    SCENE 2 — LEARNING WORLDS: an illustrated adventure map
+                ============================================================ */}
+                <section className="scene" data-reveal="map" style={{ background:'#fff8e7' }}>
+                    <div className="scene-inner py-16 lg:py-24">
+                        <h2 className="font-display ink text-center text-4xl sm:text-5xl">
+                            خريطة المغامرة <span className="text-emerald-500">الأربع عوالم</span>
+                        </h2>
+                        <p className="mx-auto mt-3 max-w-lg text-center text-base font-semibold text-[#7a6795]">
+                            اختر عالمك المفضّل وابدأ المشوار — كل عالم مكانٍ سحري بانتظارك.
+                        </p>
+
+                        <div className="relative mt-12" style={{ height:'auto', minHeight:'520px' }}>
+                            {/* winding road under the stops */}
+                            <svg viewBox="0 0 1200 520" preserveAspectRatio="none" className="absolute inset-0 w-full" style={{ height:'100%' }} aria-hidden="true">
+                                <path className="road-edge" d="M60,70 C320,210 300,430 620,320 C860,240 980,300 1140,220" />
+                                <path className="road" d="M60,70 C320,210 300,430 620,320 C860,240 980,300 1140,220" />
+                                {/* dashes */}
+                                <path fill="none" stroke="#fff" strokeWidth="6" strokeDasharray="18 26" strokeLinecap="round" d="M60,70 C320,210 300,430 620,320 C860,240 980,300 1140,220" />
+                            </svg>
+
+                            <div
+                                className="world-stop rise-on-scroll"
+                                style={{ position:'absolute', top:'0%', right:'2%', zIndex:3 }}
+                                onClick={() => (window.location.href = route('explore.index'))}
+                            >
+                                <div className="stop-plate" style={{ background:WORLDS[0].soft, borderColor:WORLDS[0].color }}>
+                                    <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke={WORLDS[0].color} strokeWidth="1.6"><path d="M3 20h18M6 20V8l6-5 6 5v12M10 20v-6h4v6" /></svg>
+                                    <strong className="font-display ink text-3xl">{WORLDS[0].title}</strong>
+                                    <span className="mt-1 text-sm font-bold text-[#7a6795]">{WORLDS[0].tag}</span>
                                 </div>
-                                {/* Girl companion */}
-                                <div className="relative z-10 -mt-[5%] flex justify-center">
-                                    <div style={{ animation: 'float-y-slow 5.8s ease-in-out infinite .6s' }}>
-                                        <img src={worldAssets.heroGirl} alt="الطفلة كشخصية مرشدة" style={{ width: '70%', height: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 14px 28px rgba(60,40,120,.3))' }} />
-                                    </div>
+                            </div>
+
+                            <div
+                                className="world-stop rise-on-scroll"
+                                style={{ position:'absolute', bottom:'2%', right:'38%', zIndex:3, animationDelay:'.12s' }}
+                                onClick={() => (window.location.href = route('explore.index'))}
+                            >
+                                <div className="stop-plate" style={{ background:WORLDS[1].soft, borderColor:WORLDS[1].color }}>
+                                    <img src={A.book} alt="" style={{ width:'56px', height:'auto' }} />
+                                    <strong className="font-display ink text-3xl">{WORLDS[1].title}</strong>
+                                    <span className="mt-1 text-sm font-bold text-[#7a6795]">{WORLDS[1].tag}</span>
                                 </div>
-                                {/* Think bubble */}
-                                <div className="absolute right-3 top-[5%] z-20" style={{ animation: 'pop-in 1.2s ease-out .6s both' }}>
-                                    <img src={worldAssets.think} alt="" style={{ width: 78, height: 'auto', objectFit: 'contain' }} />
+                            </div>
+
+                            <div
+                                className="world-stop rise-on-scroll"
+                                style={{ position:'absolute', top:'6%', left:'22%', zIndex:3, animationDelay:'.24s' }}
+                                onClick={() => (window.location.href = route('explore.index'))}
+                            >
+                                <div className="stop-plate" style={{ background:WORLDS[2].soft, borderColor:WORLDS[2].color }}>
+                                    <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke={WORLDS[2].color} strokeWidth="2">
+                                        <circle cx="12" cy="12" r="8" /><path d="M9 10h.01M15 10h.01M9 15c1 .8 2 1.2 3 1.2s2-.4 3-1.2" />
+                                    </svg>
+                                    <strong className="font-display ink text-3xl">{WORLDS[2].title}</strong>
+                                    <span className="mt-1 text-sm font-bold text-[#7a6795]">{WORLDS[2].tag}</span>
+                                </div>
+                            </div>
+
+                            <div
+                                className="world-stop rise-on-scroll"
+                                style={{ position:'absolute', top:'42%', left:'0%', zIndex:3, animationDelay:'.36s' }}
+                                onClick={() => (window.location.href = route('explore.index'))}
+                            >
+                                <div className="stop-plate" style={{ background:WORLDS[3].soft, borderColor:WORLDS[3].color }}>
+                                    <img src={A.game} alt="" style={{ width:'56px', height:'auto' }} />
+                                    <strong className="font-display ink text-3xl">{WORLDS[3].title}</strong>
+                                    <span className="mt-1 text-sm font-bold text-[#7a6795]">{WORLDS[3].tag}</span>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </section>
 
-                        {/* Copy */}
-                        <div className="lg:pr-6" style={{ animation: 'rise 1.2s cubic-bezier(.2,.8,.2,1) .15s both' }}>
-                            <span className="word-card inline-flex items-center gap-2 rounded-full bg-fuchsia-100 px-4 py-1.5 text-sm font-semibold text-fuchsia-600">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-9.5-9C.8 9.5 2 6 5.5 6 8 6 9.5 7.5 12 5.5 14.5 7.5 16 6 18.5 6 22 6 23.2 9.5 21.5 12 19 16.5 12 21 12 21z" /></svg>
-                                شخصيات مرشدة
-                            </span>
-                            <h2 className="mt-5 text-4xl font-black text-slate-800 sm:text-5xl">تعلّم مع أصدقائك</h2>
-                            <p className="mt-4 max-w-lg text-base leading-[1.7] text-slate-600">شخصيتا الطفل والطفلة تصاحبان طفلك في كل درس، يشرحان، يسألان، ويحفزان على الاستمرار. ليس مجرد صور، بل رفقاء رحلة حقيقية.</p>
-                            <div className="mt-8 flex flex-wrap gap-3">
-                                {['يرشد بخطوات واضحة', 'يشرح بلغة بسيطة', 'يحفز على الإنجاز'].map((t) => (
-                                    <span key={t} className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2"><path d="M8 7l5.5 3.5L16 7h-6z"/></svg>
-                                        {t}
+                {/* ============================================================
+                    SCENE 3 — CHARACTERS: boy & girl tell the story
+                ============================================================ */}
+                <section className="scene" data-reveal="characters" style={{ background:'#fff8e7' }}>
+                    <div className="hill hill-mid" style={{ bottom:'-34vh', left:'-16vw', width:'90vw', height:'48vh' }} aria-hidden="true" />
+                    <div className="scene-inner relative flex flex-col items-center py-16 lg:flex-row lg:items-center lg:justify-between lg:py-20">
+                        <div className="order-2 flex gap-2 lg:order-1 lg:w-[45%]">
+                            <img
+                                src={A.boySmall}
+                                alt=""
+                                className="anim-float"
+                                style={{ width:'min(40vw,220px)', height:'auto', objectFit:'contain', filter:'drop-shadow(0 18px 12px rgba(61,44,87,.3))' }}
+                            />
+                            <img
+                                src={A.girlSmall}
+                                alt=""
+                                className="anim-float-soft -mr-6"
+                                style={{ width:'min(44vw,240px)', height:'auto', objectFit:'contain', filter:'drop-shadow(0 18px 12px rgba(61,44,87,.3))' }}
+                            />
+                        </div>
+
+                        <div className="order-1 lg:order-2 lg:w-[48%]">
+                            <h2 className="font-display ink text-4xl sm:text-5xl">
+                                رامز <span className="text-sky-500">&</span> سيلينا
+                            </h2>
+                            <p className="mt-4 text-lg font-semibold leading-relaxed text-[#5b4876]">
+                                رفيقاك في كل درس — يشيران لك إلى العالم المطلوب، يجلسان على الكتاب الكبير
+                                ويشرحانه بأسلوب ممتع، وينتظرانك عند كل محطة جديدة.
+                            </p>
+                            <div className="mt-6 flex flex-wrap gap-3">
+                                {WORLDS.map((w) => (
+                                    <span key={w.id} className="rounded-full border-2 px-4 py-1 text-sm font-bold" style={{ background:w.soft, borderColor:w.color, color:'#3d2c57' }}>
+                                        {w.title}
                                     </span>
                                 ))}
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* ===================== LEARNING JOURNEY ===================== */}
-            <section className="world-section bg-gradient-to-b from-white to-violet-50/40 py-20 sm:py-28" data-reveal="journey">
-                <div className="mx-auto max-w-6xl px-5">
-                    {/* Section header */}
-                    <div className={reveal(true)('hero')} style={{ transitionDelay: '0ms' }}>
-                        <div className="mx-auto flex max-w-md flex-col items-center text-center">
-                            <span className="word-card inline-flex items-center gap-2 rounded-full bg-amber-100 px-4 py-1.5 text-sm font-semibold text-amber-600 shadow-lg shadow-amber-500/25">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2"><path d="M5 12h14m-7-7l5 5-5 5" /></svg>
-                                مسار تعلّم مُخطّط
-                            </span>
-                            <h2 className="mt-6 text-3xl font-black text-slate-800 sm:text-4xl">رحلة التعلّم</h2>
-                            <p className="mt-4 max-w-lg text-base leading-[1.7] text-slate-500">خطوات بسيطة ومتتابعة تأخذ طفلك من أول حرف إلى أول كلمة يقرأه بثقة.</p>
-                        </div>
-                    </div>
+                {/* ============================================================
+                    SCENE 4 — LEARNING JOURNEY: a visible path
+                ============================================================ */}
+                <section className="scene" data-reveal="journey" style={{ background:'#fff8e7' }}>
+                    <div className="scene-inner py-16 lg:py-24">
+                        <h2 className="font-display ink text-center text-4xl sm:text-5xl">
+                            طريق المغامرة <span className="text-amber-500">خطوة خطوة</span>
+                        </h2>
 
-                    {/* Journey path */}
-                    <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {journeySteps.map((step, i) => (
-                            <div key={step.step} className={reveal(true)('journey-node')} style={{ transitionDelay: `${(i + 1) * 90}ms` }}>
-                                <div className="relative h-full rounded-3xl bg-white p-6 shadow-lg border border-slate-100">
-                                    {/* Step number circle */}
-                                    <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full text-xl font-black text-white" style={{ background: `linear-gradient(135deg, ${step.color}, ${step.color}cc)`, filter: 'drop-shadow(0 6px 14px rgba(0,0,0,.2))' }}>
-                                        {step.step}
+                        <div className="relative mt-14" style={{ paddingTop:'80px' }}>
+                            <svg viewBox="0 0 1000 200" preserveAspectRatio="none" className="absolute inset-x-0 top-0 w-full" style={{ height:'200px' }} aria-hidden="true">
+                                <path className="trail" d="M60,120 L300,120 L300,40 L700,40 L700,160 L940,160" />
+                                <circle className="trail-dot" cx="60" cy="120" r="22" />
+                                <circle className="trail-dot" cx="300" cy="120" r="22" />
+                                <circle className="trail-dot" cx="300" cy="40" r="22" />
+                                <circle className="trail-dot" cx="700" cy="40" r="22" />
+                                <circle className="trail-dot" cx="700" cy="160" r="22" />
+                                <circle className="trail-dot" cx="940" cy="160" r="22" />
+                            </svg>
+
+                            <div className="relative z-10 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+                                {JOURNEY.map((s, i) => (
+                                    <div key={s.step} className="rise-on-scroll flex flex-col items-center text-center">
+                                        <span
+                                            className="anim-float-soft flex h-24 w-24 items-center justify-center rounded-full border-4 border-white font-display text-4xl text-white shadow-xl"
+                                            style={{ background:['#fb7185', '#38bdf8', '#fbbf24', '#34d399'][i], boxShadow:'0 14px 24px -10px rgba(61,44,87,.5)', animationDelay:`${i * .25}s` }}
+                                        >
+                                            {s.step}
+                                        </span>
+                                        <strong className="font-display ink mt-4 text-2xl">{s.title}</strong>
+                                        <span className="mt-1 text-sm font-semibold text-[#7a6795]">{s.desc}</span>
                                     </div>
-                                    <h3 className="mt-5 text-xl font-black text-slate-800">{step.title}</h3>
-                                    <p className="mt-1.5 text-sm leading-[1.6] text-slate-500">{step.desc}</p>
-                                </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
 
-            {/* ===================== ACHIEVEMENTS / STATISTICS ===================== */}
-            <section className="world-section relative overflow-hidden py-20 sm:py-28" data-reveal="achievements" style={{ background: 'linear-gradient(160deg, #4f46e5 0%, #7c3aed 45%, #a213da 100%)' }}>
-                {/* Decorative orbs */}
-                <div className="cta-orb" style={{ width: 380, height: 380, top: '-90px', left: '-70px', background: 'radial-gradient(circle, rgba(251,113,133,.6), transparent 70%)' }} />
-                <div className="cta-orb" style={{ width: 340, height: 340, bottom: '-80px', right: '-50px', background: 'radial-gradient(circle, rgba(56,189,248,.5), transparent 70%)' }} />
-                <div className="cta-orb" style={{ width: 300, height: 300, top: '40%', left: '-12%' }} />
-
-                <div className="mx-auto max-w-6xl px-5 relative z-10">
-                    {/* Section header */}
-                    <div className={reveal(true)('hero')} style={{ transitionDelay: '0ms' }}>
-                        <div className="mx-auto flex max-w-md flex-col items-center text-white">
-                            <span className="word-card inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold border border-white/20 backdrop-blur-sm">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3z" /></svg>
-                                الإنجازات والتقدّم
-                            </span>
-                            <h2 className="mt-5 text-4xl font-black sm:text-5xl">كل خطوة تُحتفى بها</h2>
-                            <p className="mt-4 max-w-lg text-base leading-[1.7] text-white/80">نحتفي بكل إنجاز صغير، ونعرض الإحصائيات التي تحفّز على الاستمرار.</p>
+                            <div className="mt-12 flex justify-center">
+                                <a href={startRoute} className="btn-world btn-candy">
+                                    سر على الطريق الآن
+                                </a>
+                            </div>
                         </div>
                     </div>
+                </section>
 
-                    {/* Stats grid */}
-                    <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                        {stats.map((s, i) => (
-                            <div key={s.label} className={reveal(true)('stat-pill')} style={{ transitionDelay: `${(i + 1) * 90}ms` }}>
-                                <div className="rounded-3xl bg-white/12 p-7 text-center border border-white/25 backdrop-blur-sm">
-                                    <div className="text-4xl font-black text-white mb-1.5">{s.value}</div>
-                                    <div className="mt-1.5 text-base font-medium text-white/80">{s.label}</div>
+                {/* ============================================================
+                    SCENE 5 — ACHIEVEMENTS: treasure / celebration garden
+                ============================================================ */}
+                <section className="scene" data-reveal="treasure" style={{ background:'#fdf2d8' }}>
+                    <div className="hill hill-mid" style={{ bottom:'-36vh', right:'-14vw', width:'80vw', height:'50vh', background:'#cbe5c0' }} aria-hidden="true" />
+                    <div className="scene-inner py-16 lg:py-24">
+                        <h2 className="font-display ink text-center text-4xl sm:text-5xl">
+                            حديقة <span className="text-amber-500">الكنوز</span>
+                        </h2>
+                        <p className="mx-auto mt-3 max-w-md text-center text-base font-semibold text-[#7a6795]">
+                            كل نجمة تجمعها من درس تضيفها إلى حديقتك — شاهد كيف تكبر!
+                        </p>
+
+                        <div className="relative mx-auto mt-10 flex max-w-4xl flex-wrap items-center justify-center gap-6 lg:gap-10">
+                            {/* big trophy */}
+                            <div className="anim-sway flex flex-col items-center">
+                                <img src={A.trophy} alt="كأس الإنجاز" className="star-shape" style={{ width:'120px', height:'auto' }} />
+                                <span className="font-display ink mt-2">كأس المجتهد</span>
+                            </div>
+
+                            {/* stars */}
+                            <div className="flex flex-col items-center">
+                                <div className="flex">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                        <svg key={i} className="twinkle star-shape" style={{ width:'44px', height:'44px', margin:'0 -4px', animationDelay:`${i * .3}s` }} viewBox="0 0 24 24" fill="#ffb347">
+                                            <path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3z" />
+                                        </svg>
+                                    ))}
                                 </div>
+                                <span className="font-display ink mt-2">نجومك الليلة</span>
                             </div>
-                        ))}
-                    </div>
 
-                    {/* Achievement badges */}
-                    <div className="mt-14 flex flex-wrap items-center justify-center gap-3">
-                        {[
-                            { emoji: '🏅', label: 'نجم الحروف' },
-                            { emoji: '🎨', label: 'بطل الإبداع' },
-                            { emoji: '📚', label: 'قارئ الكلمات' },
-                            { emoji: '🌟', label: 'مُجتاز المراحل' },
-                        ].map((b, i) => (
-                            <div key={b.label} className="flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 border border-white/20 backdrop-blur-sm" style={{ animation: `pop-in .6s ease-out ${0.3 + i * 0.1}s both` }}>
-                                <span className="text-xl">{b.emoji}</span>
-                                <span className="text-sm font-semibold text-white/95">{b.label}</span>
+                            {/* open book */}
+                            <div className="anim-float-soft flex flex-col items-center">
+                                <img src={A.book} alt="" className="star-shape" style={{ width:'110px', height:'auto' }} />
+                                <span className="font-display ink mt-2">شهادة القارئ</span>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
 
-            {/* ===================== PARENTS SECTION ===================== */}
-            <section className="world-section bg-gradient-to-b from-white to-rose-50/40 py-20 sm:py-28" data-reveal="parents">
-                <div className="mx-auto max-w-6xl px-5">
-                    {/* Layout row */}
-                    <div className="grid items-center gap-12 lg:grid-cols-2">
-                        {/* Copy */}
-                        <div style={{ animation: 'rise 1.2s cubic-bezier(.2,.8,.2,1) both' }}>
-                            <span className="word-card inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-semibold text-emerald-600 shadow-lg shadow-emerald-500/25">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6m-3-4h3" /></svg>
-                                للأهل
-                            </span>
-                            <h2 className="mt-5 text-3xl font-black text-slate-800 sm:text-4xl">تتبّع رحلة تعلّم طفلك</h2>
-                            <p className="mt-4 max-w-lg text-base leading-[1.7] text-slate-600">صُممت لوحة الأهل لتعطيك صورة واضحة عن تقدّم طفلك، أهدافه، وإنجازاته، بدون تعقيد.</p>
+                            {/* target */}
+                            <div className="anim-float flex flex-col items-center">
+                                <img src={A.target} alt="" className="star-shape" style={{ width:'110px', height:'auto' }} />
+                                <span className="font-display ink mt-2">هدف الحروف</span>
+                            </div>
                         </div>
 
-                        {/* Parent tiles */}
-                        <div className="grid gap-5 sm:grid-cols-3 lg:grid-cols-1">
-                            {parentFeatures.map((f, i) => (
-                                <div key={f.title} className={reveal(true)('parent-tile')} style={{ transitionDelay: `${(i + 1) * 90}ms`, '--tile-accent': '#c7d2fe' }}>
-                                    <div className="rounded-3xl bg-white p-5 shadow-lg border border-slate-100 flex items-start gap-4">
-                                        <div className="flex h-[56px] w-[56px] shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-2xl">{f.icon}</div>
-                                        <div>
-                                            <h3 className="text-lg font-black text-slate-800">{f.title}</h3>
-                                            <p className="mt-1.5 text-sm leading-[1.6] text-slate-500">{f.desc}</p>
-                                        </div>
-                                    </div>
+                        {/* stats live inside the environment */}
+                        <div className="scope mx-auto mt-12 grid max-w-3xl grid-cols-2 gap-5 p-6 sm:grid-cols-4 sm:p-8">
+                            {(liveStats && liveStats.length
+                                ? liveStats
+                                : [
+                                      { label: 'طالب وطالبة', value: '+10K' },
+                                      { label: 'درس تفاعلي', value: '+500' },
+                                      { label: 'عالم تعلّم', value: '4' },
+                                      { label: 'تقييم الأهل', value: '4.9★' },
+                                  ]
+                            ).map((stat, i) => (
+                                <div key={`${stat.label}-${i}`} className="flex flex-col items-center text-center">
+                                    <strong className="font-display text-3xl text-emerald-600 sm:text-4xl">{stat.value ?? stat.label}</strong>
+                                    <span className="mt-1 text-sm font-bold text-[#7a6795]">{stat.label ?? stat.title}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* ===================== FINAL CTA ===================== */}
-            <section className="world-section relative overflow-hidden py-24 sm:py-32" data-reveal="cta" style={{ background: 'linear-gradient(160deg, #fde68a 0%, #fecdc3 50%, #ddd6fe 100%)' }}>
-                <div className="cta-orb" style={{ width: 420, height: 420, top: '-90px', right: '-7%', background: 'radial-gradient(circle, rgba(251,113,133,.6), transparent 70%)' }} />
-                <div className="cta-orb" style={{ width: 380, height: 380, bottom: '-90px', left: '-4%', background: 'radial-gradient(circle, rgba(56,189,248,.5), transparent 70%)' }} />
-                <div className="cta-orb" style={{ width: 300, height: 300, top: '35%', left: '-12%' }} />
+                {/* ============================================================
+                    SCENE 6 — PARENTS: a calm observatory window
+                ============================================================ */}
+                <section className="scene" data-reveal="parents" style={{ background:'#eef6ff' }}>
+                    <div className="scene-inner py-16 lg:py-24">
+                        <div className="mx-auto grid max-w-5xl items-center gap-10 lg:grid-cols-2">
+                            <div>
+                                <h2 className="font-display ink text-4xl sm:text-5xl">
+                                    نافذة <span className="text-indigo-500">الأهل</span>
+                                </h2>
+                                <p className="mt-4 text-lg font-semibold leading-relaxed text-[#5b4876]">
+                                    من هنا ترى كل شيء بنظرة هادئة: تقدّم طفلك، دروسه المنجزة، أهدافه التالية
+                                    وإنجازاته — من دون أي تعقيد.
+                                </p>
+                            </div>
 
-                {/* Scene wrapper */}
-                <div className="mx-auto flex max-w-3xl flex-col items-center px-5 text-center relative z-10">
-                    {/* Character row - Boy + Girl together as scene anchors */}
-                    <div className="flex -space-x-4 space-x-reverse mb-8" style={{ animation: 'pop-in .9s ease-out both' }}>
-                        <img src={worldAssets.boy1} alt="شخصية الطفل" style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: '50%', border: '4px solid white', boxShadow: '0 8px 20px rgba(0,0,0,.15)' }} />
-                        <img src={worldAssets.girl1} alt="شخصية الطفلة" style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: '50%', border: '4px solid white', boxShadow: '0 8px 20px rgba(0,0,0,.15)', marginRight: -20 }} />
+                            <div className="scope p-6 sm:p-8">
+                                <div className="flex items-center justify-between">
+                                    <span className="font-display ink text-lg">تقدم رامز هذا الأسبوع</span>
+                                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-bold text-emerald-700">رائع!</span>
+                                </div>
+                                <div className="grow-track mt-4">
+                                    <div className="grow-fill" style={{ width:'78%' }} />
+                                </div>
+
+                                <div className="mt-6 grid grid-cols-3 gap-3 text-center">
+                                    {[
+                                        { label: 'دروس منجزة', value: '14' },
+                                        { label: 'أهداف تحققت', value: '9' },
+                                        { label: 'نجوم جمعها', value: '38' },
+                                    ].map((b) => (
+                                        <div key={b.label} className="rounded-2xl bg-[#fdf6e3] p-3">
+                                            <strong className="font-display text-xl text-indigo-600">{b.value}</strong>
+                                            <span className="mt-1 block text-xs font-bold text-[#8a77a6]">{b.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <a href={route('register')} className="btn-world btn-sky mt-6 w-full justify-center">
+                                    أنشئ حساب طفلك
+                                </a>
+                            </div>
+                        </div>
                     </div>
+                </section>
 
-                    <h2 className="text-3xl sm:text-4xl font-black text-slate-800 sm:text-5xl">جاهز تبدأ المغامرة؟</h2>
-                    <p className="mt-4 max-w-lg text-base leading-[1.7] text-slate-600">انضم إلى آلاف العائلات التي اختارت عربيتي لتعليم أطفالها بلغة ممتعة وموثوقة.</p>
-                    <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                        <a href={startRoute} className="word-card inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-fuchsia-600 px-7 py-4 font-bold text-white shadow-xl shadow-fuchsia-500/25 transition hover:-translate-y-[1px] hover:shadow-2xl">
-                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7l5 5-5 5" /></svg>
-                            ابدأ مجاناً
-                        </a>
-                        <a href={route('register')} className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 bg-white px-7 py-4 font-bold text-slate-600 transition hover:-translate-y-[1px] hover:border-slate-400 hover:shadow-lg">
-                            إنشاء حساب
-                        </a>
+                {/* ============================================================
+                    SCENE 7 — FINAL CTA: entrance to the school
+                ============================================================ */}
+                <section className="scene" data-reveal="cta" style={{ minHeight:'100vh', display:'flex', alignItems:'center' }}>
+                    <div className="sun" style={{ right:'auto', left:'6%', top:'12%', width:'80px', height:'80px' }} aria-hidden="true" />
+                    <div className="cloud anim-drift" style={{ width:'200px', height:'54px', top:'10%', left:'auto', right:'4%' }} aria-hidden="true" />
+
+                    {/* far + mid hills for depth */}
+                    <div className="hill hill-far" style={{ bottom:'-44vh', left:'-14vw', width:'70vw', height:'58vh' }} />
+                    <div className="hill hill-mid" style={{ bottom:'-28vh', right:'-10vw', width:'78vw', height:'44vh' }} />
+                    <div className="hill hill-near" style={{ bottom:'-16vh', left:'-6vw', width:'112vw', height:'26vh' }} />
+
+                    <div className="scene-inner relative z-10 flex w-full flex-col items-center pb-[34vh] pt-20 text-center">
+                        <h2 className="font-display ink text-5xl sm:text-6xl lg:text-7xl">
+                            جاهز تبدأ <span className="text-rose-500" style={{ WebkitTextStroke:'2px #fff' }}>المغامرة؟</span>
+                        </h2>
+                        <p className="mt-4 max-w-md text-lg font-semibold text-[#5b4876]">
+                            المدخل أمامك مفتوح — باتجاه الحروف والكلمات وكل الألعاب.
+                        </p>
+
+                        <div className="relative mt-8">
+                            <a href={startRoute} className="btn-world btn-candy relative z-10 text-xl" style={{ padding:'.95rem 2.5rem' }}>
+                                ابدأ الآن
+                            </a>
+                        </div>
+
+                        {/* the two protagonists waiting by the entrance */}
+                        <div className="relative mt-10 flex items-end justify-center">
+                            <img src={A.boyHero} alt="" className="anim-float relative z-10" style={{ width:'min(32vw,180px)', height:'auto', objectFit:'contain', filter:'drop-shadow(0 20px 14px rgba(61,44,87,.3))' }} />
+                            <img src={A.girlHero} alt="" className="anim-float-soft -mr-6" style={{ width:'min(32vw,184px)', height:'auto', objectFit:'contain', filter:'drop-shadow(0 20px 14px rgba(61,44,87,.3))' }} />
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+
+            </div>
         </PublicSiteLayout>
     );
 }
