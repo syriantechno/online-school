@@ -98,6 +98,7 @@ $marketingPages = [
 foreach ($marketingPages as $slug => $page) Route::get('/'.$slug, fn () => Inertia::render('MarketingPage', ['page' => $page]))->name('marketing.'.$slug);
 
 Route::get('/lab/gradient', fn () => Inertia::render('Lab/GradientBg'))->name('lab.gradient');
+Route::get('/lab/bright', fn () => Inertia::render('Lab/Bright'))->name('lab.bright');
 
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/robots.txt', function () {

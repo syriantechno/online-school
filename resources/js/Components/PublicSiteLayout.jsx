@@ -27,10 +27,11 @@ function Icon({ name, className = 'h-6 w-6' }) {
 
 const nav = [
     ['الرئيسية', '/'],
+    ['المراحل', '/#grades'],
+    ['كيف يعمل', '/#how'],
+    ['الشخصيات', '/#heroes'],
     ['الدورات', '/explore'],
-    ['المعلمون', '/teachers'],
-    ['الصفوف', '/#grades'],
-    ['تواصل معنا', '/contact'],
+    ['تواصل', '/contact'],
 ];
 
 export function formatDuration(minutes) {
@@ -57,44 +58,53 @@ function LogoutButton({ className = 'site-btn site-btn-ghost', onClick }) {
     );
 }
 
-export default function PublicSiteLayout({ children, title, fullBleed = false, overlayHero = false }) {
+export default function PublicSiteLayout({ children, title, fullBleed = false, overlayHero = false, hideFooter = false, hideHeader = false }) {
     const [open, setOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
-    const { auth } = usePage().props;
+    const page = usePage();
+    const { auth } = page.props;
     const user = auth?.user;
     const isStudent = user?.role === 'student';
+    const activePath = (page.url || '/').split('?')[0];
 
     useEffect(() => {
-        if (!overlayHero) {
-            setScrolled(false);
-            return undefined;
-        }
         const onScroll = () => setScrolled(window.scrollY > 48);
         onScroll();
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
-    }, [overlayHero]);
+    }, []);
 
     const headerClass = [
-        'site-header fixed inset-x-0 top-0 z-50',
+        'site-header fixed inset-x-0 top-0 z-50 is-animated-nav',
         overlayHero ? 'is-on-hero is-light-hero' : '',
-        overlayHero && scrolled ? 'is-scrolled' : '',
+        scrolled ? 'is-scrolled' : '',
     ].filter(Boolean).join(' ');
 
     return (
         <div dir="rtl" className="site-shell min-h-screen overflow-x-hidden font-sans text-[var(--site-text)]">
+            {!hideHeader && (
             <header className={headerClass}>
                 <nav aria-label="التنقل الرئيسي" className="site-header-inner">
                     <Link href="/" className="site-brand site-brand-with-logo">
                         <ArabetiLogo size="nav" animate={false} />
                     </Link>
 
-                    <div className="site-nav-desktop">
-                        {nav.map(([label, href]) => (
-                            <Link key={label} href={href} className="site-nav-link">
-                                {label}
-                            </Link>
-                        ))}
+                    <div className="site-nav-desktop is-animated">
+                        {nav.map(([label, href]) => {
+                            const pathOnly = href.split('#')[0] || '/';
+                            const isActive = pathOnly === '/'
+                                ? activePath === '/'
+                                : activePath === pathOnly || activePath.startsWith(`${pathOnly}/`);
+                            return (
+                                <Link
+                                    key={label}
+                                    href={href}
+                                    className={`site-nav-link${isActive ? ' is-active' : ''}`}
+                                >
+                                    {label}
+                                </Link>
+                            );
+                        })}
                     </div>
 
                     <div className="site-header-actions">
@@ -190,8 +200,9 @@ export default function PublicSiteLayout({ children, title, fullBleed = false, o
                     </div>
                 )}
             </header>
+            )}
 
-            <main className={fullBleed ? '' : 'site-main'}>
+            <main className={fullBleed || hideHeader ? '' : 'site-main'}>
                 {title && (
                     <div className="site-page-title">
                         <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-7 lg:px-10">
@@ -202,61 +213,63 @@ export default function PublicSiteLayout({ children, title, fullBleed = false, o
                 {children}
             </main>
 
-            <footer className="site-footer site-footer-branded">
-                <div className="site-footer-wave" aria-hidden="true">
-                    <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
-                        <path fill="currentColor" d="M0,48 C240,96 480,0 720,32 C960,64 1200,96 1440,40 L1440,80 L0,80 Z" />
-                    </svg>
-                </div>
-                <div className="site-footer-bridge">
-                    <Link href={route('explore.index')} className="site-btn site-btn-accent">
-                        للطلاب والأهل
-                        <Icon name="arrow" className="h-4 w-4" />
-                    </Link>
-                    <Link href={route('marketing.teachers')} className="site-btn site-btn-accent">
-                        للمعلمين
-                        <Icon name="arrow" className="h-4 w-4" />
-                    </Link>
-                </div>
-                <BrandLetters variant="footer" />
-                <div className="site-footer-grid">
-                    <div>
-                        <strong className="site-footer-brand site-brand-arabeti">عربيتي</strong>
-                        <p className="site-footer-text">
-                            منصة عربية للأطفال والعائلات: حروف وهوية أصيلة، دروس قصيرة، ومتابعة تقدّم يفهمها الأهل.
-                        </p>
+            {!hideFooter && (
+                <footer className="site-footer site-footer-branded">
+                    <div className="site-footer-wave" aria-hidden="true">
+                        <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
+                            <path fill="currentColor" d="M0,48 C240,96 480,0 720,32 C960,64 1200,96 1440,40 L1440,80 L0,80 Z" />
+                        </svg>
                     </div>
-                    <div>
-                        <h3>تعلّم معنا</h3>
-                        <ul>
-                            <li><Link href={route('explore.index')}>استكشف الدورات</Link></li>
-                            <li><Link href="/#grades">مسار النجوم</Link></li>
-                            <li><Link href={route('register')}>إنشاء حساب</Link></li>
-                            <li><Link href={route('marketing.pricing')}>الأسعار</Link></li>
-                        </ul>
+                    <div className="site-footer-bridge">
+                        <Link href={route('explore.index')} className="site-btn site-btn-accent">
+                            للطلاب والأهل
+                            <Icon name="arrow" className="h-4 w-4" />
+                        </Link>
+                        <Link href={route('marketing.teachers')} className="site-btn site-btn-accent">
+                            للمعلمين
+                            <Icon name="arrow" className="h-4 w-4" />
+                        </Link>
                     </div>
-                    <div>
-                        <h3>للعائلات</h3>
-                        <ul>
-                            <li><Link href={route('marketing.about')}>عن المدرسة</Link></li>
-                            <li><Link href={route('marketing.teachers')}>المعلمون</Link></li>
-                            <li><Link href={route('marketing.contact')}>تواصل معنا</Link></li>
-                        </ul>
+                    <BrandLetters variant="footer" />
+                    <div className="site-footer-grid">
+                        <div>
+                            <strong className="site-footer-brand site-brand-arabeti">عربيتي</strong>
+                            <p className="site-footer-text">
+                                منصة عربية للأطفال والعائلات: حروف وهوية أصيلة، دروس قصيرة، ومتابعة تقدّم يفهمها الأهل.
+                            </p>
+                        </div>
+                        <div>
+                            <h3>تعلّم معنا</h3>
+                            <ul>
+                                <li><Link href={route('explore.index')}>استكشف الدورات</Link></li>
+                                <li><Link href="/#grades">مسار النجوم</Link></li>
+                                <li><Link href={route('register')}>إنشاء حساب</Link></li>
+                                <li><Link href={route('marketing.pricing')}>الأسعار</Link></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3>للعائلات</h3>
+                            <ul>
+                                <li><Link href={route('marketing.about')}>عن المدرسة</Link></li>
+                                <li><Link href={route('marketing.teachers')}>المعلمون</Link></li>
+                                <li><Link href={route('marketing.contact')}>تواصل معنا</Link></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3>روابط مفيدة</h3>
+                            <ul>
+                                <li><Link href={route('marketing.blog')}>المدونة</Link></li>
+                                <li><Link href={route('login')}>تسجيل الدخول</Link></li>
+                                <li><Link href={route('register')}>اشترك</Link></li>
+                            </ul>
+                        </div>
                     </div>
-                    <div>
-                        <h3>روابط مفيدة</h3>
-                        <ul>
-                            <li><Link href={route('marketing.blog')}>المدونة</Link></li>
-                            <li><Link href={route('login')}>تسجيل الدخول</Link></li>
-                            <li><Link href={route('register')}>اشترك</Link></li>
-                        </ul>
+                    <div className="site-footer-bar">
+                        <span>© {new Date().getFullYear()} عربيتي</span>
+                        <span>هوية الحرف العربي</span>
                     </div>
-                </div>
-                <div className="site-footer-bar">
-                    <span>© {new Date().getFullYear()} عربيتي</span>
-                    <span>هوية الحرف العربي</span>
-                </div>
-            </footer>
+                </footer>
+            )}
         </div>
     );
 }
